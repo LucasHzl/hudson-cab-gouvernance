@@ -80,7 +80,7 @@ Les volumes après purge évoluent avec la date ; les tests 02 et 10 calculent l
 | A14, rejeu des politiques | Pas de perte des règles | 18 contrôles OK après rejeu 03/04, capture 26 | Prouvé |
 | A15, reconstruction | Protections et descriptions maintenues | 18 contrôles OK après tâches, capture 15 | Prouvé sur les contrôles exécutés |
 | A16, extension par mapping | Ajouter Bronx sans modifier la politique, puis restaurer | 143/365 → 249/655 → 143/365, trois OK, capture 24 | Prouvé |
-| A17-A20, contrôles additionnels | SYSADMIN zéro, administrateur RAW zéro, refus GOUVERNANCE/RAW/STAGING, bon rôle actif | Inclus dans 10_recette_complete.sql | Attente d’exécution |
+| A17-A20, contrôles additionnels | SYSADMIN zéro, administrateur RAW zéro, refus GOUVERNANCE/RAW/STAGING, bon rôle actif | Capture 27 : 69 assertions conformes, huit rôles, zéro échec | Prouvé |
 
 ## 4. Conservation, qualité et tâches
 
@@ -101,7 +101,7 @@ Les volumes après purge évoluent avec la date ; les tests 02 et 10 calculent l
 | AU01 | Rôles et colonnes référencées sur sept jours | 13 groupes rôle/type, capture 07 | Prouvé |
 | AU02 | Comptes utilisateurs consultables sans publication | 06b_audit_detail_prive.sql | Script prêt, consultation privée non consignée |
 | L01 | Lignage du mensuel | DIM_DRIVER + STAGING services vers mensuel, capture 04 | Prouvé |
-| I01 | Deux rejeux du chargement, stage vide, contenus RAW inchangés | 11_rejeu_chargement.sql, six assertions | Attente d’exécution |
+| I01 | Deux rejeux du chargement, stage vide, contenus RAW inchangés | Capture 28 : six assertions OK après deux rejeux | Prouvé |
 
 Les mesures sont enregistrées avant l’exception bloquante. Les deux alertes non bloquantes ne sont pas des échecs techniques. L’audit ne démontre pas à lui seul une visibilité en clair ; les tests de lecture apportent cette distinction. ACCOUNTADMIN peut référencer la table tout en obtenant zéro ligne.
 
@@ -112,3 +112,9 @@ Les mesures sont enregistrées avant l’exception bloquante. Les deux alertes n
 11_rejeu_chargement.sql réexécute deux fois le bloc exact du chargement, avec stage vide exigé. Volumes et empreintes complètes des deux RAW doivent rester identiques ; aucun fichier historique n’est redéposé. Cela prouve le rejeu après purge du stage, pas le traitement d’une nouvelle livraison complète.
 
 Les scripts 01 et 04 conservent les références initiales avant purge. Après purge, utiliser les recettes dynamiques 02, 06, 10 et 11. Les tests non exécutés restent identifiés ; aucune validation n’est déduite de la seule présence d’un script.
+
+## Recettes finales observées et extension de classification
+
+[Capture 27](27_recette_complete_69_controles.png) : 69/69 contrôles conformes, zéro échec sur huit rôles (7 administrateur, 11 analyste, 7 gouvernance, 11 Bronx, 11 Queens, 9 paie, 7 SYSADMIN, 6 TRANSFORMER). Elle consolide les tests détaillés A01-A12 et A17-A20. [Capture 28](28_rejeu_chargement.png) : six contrôles OK, volumes et contenus RAW identiques après deux rejeux ; stage vide. Suspension de la racine consignée après ces opérations, sans capture dédiée.
+
+Avant extension : couverture attendue 39 colonnes personnelles sur quatre tables, zéro écart et 21 colonnes personnelles taguées dans le catalogue métier (25 colonnes au total). Attentes dans tests/12_couverture_tags.sql. Après migration, rejouer également tests/10_recette_complete.sql : 69 contrôles toujours attendus conformes, sans changement de la matrice des accès. Les résultats antérieurs ne valent pas validation de la migration.

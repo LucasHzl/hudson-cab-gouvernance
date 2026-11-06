@@ -13,12 +13,12 @@ Contrôle du 6 novembre 2026, contre BRIEF.md, CONTRAT_GOUVERNANCE.md, GUIDE_BRI
 | C19.1 | Deux CSV chargés, format/stage/COPY expliqués, stage vide | [x] Scripts fournis utilisés, explications README, volumes et capture 25 ; le contrôle renforcé des deux rejeux reste à exécuter |
 | C19.2 | Tâches purge → qualité → reconstruction, rôle des outils | [x] TRANSFORMER, captures 13/14/17/19/22 |
 | C19.3 | Tags, politiques et descriptions survivent aux tâches | [x] 18 contrôles après tâches, capture 15 ; après rejeu, capture 26 |
-| C19.4 | README rejouable ; aucun secret ni donnée personnelle dans Git | [ ] Ordre complet et exclusions contrôlés ; nouveau garde-fou de chargement à valider par recette 11 avant de cocher la rejouabilité |
+| C19.4 | README rejouable ; aucun secret ni donnée personnelle dans Git | [x] Ordre complet, exclusions contrôlées et deux rejeux avec contenus RAW inchangés, capture 28 |
 | C20.1 | Chaque table décrite avec source/rythme, colonnes DIM_DRIVER/RAW.DRIVERS décrites | [x] Cinq fiches, 47 colonnes commentées ; zéro commentaire absent dans les contrôles après tâches |
 | C20.2 | Toutes les colonnes personnelles taguées ; sensibilité/durée par table | [ ] Tags de table posés ; vingt attributs personnels sans catégorie fidèle aux six valeurs imposées. Écart du contrat consigné ; C20 non intégralement validé |
 | C20.3 | Vue catalogue descriptions/tags lisible par métier | [x] V_CATALOGUE, 25 lignes accessibles à ANALYSTE, capture 26 |
 | C20.4 | Qualité documentée et lignage présenté | [x] Trois règles, seuils/gravités dans README ; lignage capture 04 |
-| C21.1 | Matrice de tous les rôles, administrateur et gouvernance inclus | [ ] Tests initiaux consignés conformes et captures agrégées ; recette renforcée 10 attendue pour consolider refus, SYSADMIN et toutes les valeurs |
+| C21.1 | Matrice de tous les rôles, administrateur et gouvernance inclus | [x] Capture 27 : 69 contrôles, huit rôles, 22 refus attendus et matrice des deux tables métier, zéro échec ; à recontrôler après extension des tags |
 | C21.2 | Extension du périmètre par mapping sans changer la politique | [x] Capture 24, trois étapes conformes et état restauré |
 | C21.3 | Purge cinq ans toutes copies, Time Travel un jour | [x] Captures 11/12 ; essai réel après 24 h non réalisé, paramètre prouvé |
 | C21.4 | Trois règles dont service_rattache ; mesures et blocage | [x] Captures 16/20/21/22/23, seuil normal rétabli |
@@ -33,8 +33,9 @@ Contrôle du 6 novembre 2026, contre BRIEF.md, CONTRAT_GOUVERNANCE.md, GUIDE_BRI
 - [x] VEILLE, REGISTRE, ACCES remplis ; trames vierges retirées du rendu.
 - [x] Sept catégories de captures obligatoires ; index dans SUIVI.
 - [x] Questions du guide et de conception répondues dans QUESTIONS.md ; soutenance structurée dans SOUTENANCE.md.
-- [ ] Résultats des recettes finales 10 et 11 à consigner.
-- [ ] Suspension finale et présence des derniers commits sur GitHub à constater.
+- [x] Recettes finales 10 et 11 : captures 27/28, 69 et six contrôles OK.
+- [x] Suspension finale de la racine consignée, sans capture dédiée.
+- [ ] Derniers commits et état public de GitHub à constater après publication.
 
 ## Réserves assumées
 
