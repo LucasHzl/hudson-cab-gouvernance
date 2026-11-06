@@ -1,6 +1,6 @@
 # Registre du traitement — données du personnel
 
-Document en cours — 5 novembre 2026. Inventaire établi par lecture des en-têtes et des transformations du kit, sans publication de valeurs des CSV. Qualification des colonnes expliquée avec l’étudiant ; relecture finale, décisions de tags et preuves Snowflake à compléter.
+Mis à jour le 6 novembre 2026. Inventaire des sources et dérivations, registre et preuves techniques renseignés à partir des scripts et résultats fournis par Lucas. Aucune valeur personnelle des CSV publiée ; les décisions juridiques restent à faire valider par le responsable du traitement.
 
 ## Partie 1 — Inventaire des données personnelles
 
@@ -40,7 +40,7 @@ Les 18 colonnes des deux fichiers sont personnelles dans leur contexte, car chaq
 
 ### Où les données sont-elles copiées ?
 
-Lecture des fichiers SQL fournis ; aucune exécution des transformations n’est encore attestée. Noms des tables préfixés par NYC_TAXI.
+Copies identifiées dans les SQL fournis et transformations exécutées ; volumes et lignage observés sur captures. Noms des tables préfixés par NYC_TAXI.
 
 | Source | Étape intermédiaire | Destination et forme |
 |---|---|---|
@@ -110,7 +110,7 @@ Chaque réponse de la colonne de droite doit pouvoir être vérifiée dans l'ent
 |---|---|---|
 | R1 : suppression 5 ans après la fin du contrat | Purge exécutée : 400→354 chauffeurs ; aucune copie expirée dans les quatre tables, première preuve vérifiée sur capture. | rh/purge_rh.sql, gouvernance/tests/05_preuve_purge.sql et capture 12_purge_et_time_travel.png |
 | R2 : pas de restauration au-delà de 1 jour | DATA_RETENTION_TIME_IN_DAYS=1 observé sur les quatre tables ; Fail-safe distinct ; disparition après 24 h non testée. | rh/conservation_rh.sql et capture 11_retention_un_jour.png |
-| R3 : pas de fichier sur le stage | PURGE=TRUE dans le COPY ; stage vide rapporté, dernière vérification LIST encore à conserver. | rh/chargement_rh_2_copier.sql |
+| R3 : pas de fichier sur le stage | PURGE=TRUE dans le COPY ; stage vide observé par LIST, compteur à zéro. | rh/chargement_rh_2_copier.sql, tests/09_stage_vide.sql, capture 25_stage_vide.png |
 
 Délai réel entre l'exécution de la purge et la disparition définitive d'une donnée dans Snowflake, en tenant compte de Time Travel et de Fail-safe : Un jour de Time Travel puis sept jours de Fail-safe sur les tables permanentes : succession nominale de huit jours, sans garantie d’effacement physique à heure fixe. Les requêtes longues, copies externes et fichiers locaux doivent aussi être pris en compte.
 
@@ -119,59 +119,27 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 | Question | Réponse | Preuve |
 |---|---|---|
 | Peut-on dire qui a lu ces données la semaine dernière ? | Audit exécuté sur sept jours : quatre métiers, TRANSFORMER et ACCOUNTADMIN référencent DIM_DRIVER ; résultat sans preuve de valeurs visibles en clair. Identification des comptes possible via le complément privé, non attestée. | Capture 07_audit.png ; 06_audit.sql et 06b_audit_detail_prive.sql ; délai possible de trois heures |
-| Sait-on quand une donnée est fausse ? | Trois règles exécutées : 4 licences et 7 emails en ALERTE, 25 services orphelins sous le seuil bloquant 50 ; elles ne garantissent pas toute l’exactitude. | rh/qualite_rh.sql et futurs résultats QUALITE_RESULTATS |
+| Sait-on quand une donnée est fausse ? | Trois règles exécutées : 4 licences et 7 emails en ALERTE, 25 services orphelins sous le seuil bloquant 50 ; elles ne garantissent pas toute l’exactitude. | rh/qualite_rh.sql et captures 16, 21, 23 |
 | Que se passe-t-il si le rôle des outils est compromis ? | TRANSFORMER dispose des données en clair et possède les tables : compromission critique, les règles actuelles ne suffisent pas contre leur propriétaire malveillant. Suspendre les tâches, retirer les habilitations du compte compromis, renouveler ses accès et examiner les journaux. | Privilèges d’installation, mapping TRANSFORMER et politiques ; réponse à incident proposée, non exercée |
 
 ### Limites connues
 
-Ce que votre mise en œuvre ne couvre pas : deux ou trois lignes, sans détour.
+La taxonomie imposée ne couvre pas toutes les catégories personnelles : inventaire et protections en place, écart C20 explicite. La durée uniforme de cinq ans nécessite une justification par finalité et une décision sur l’archivage. Time Travel et Fail-safe empêchent d’assimiler la purge à un effacement physique immédiat ; copies externes hors périmètre. Les rôles administratifs et le propriétaire des tables peuvent reconfigurer le système : les tests ne constituent pas une protection contre un administrateur malveillant.
 
-## Évolution préparée — année de naissance
 
-Migration 01_annee_naissance.sql préparée, non exécutée : ajout de MARTS.DIM_DRIVER.birth_year depuis YEAR(birth_date). C’est une donnée personnelle calculée, tag date_naissance, destinée à ANALYSTE et RH_PAIE ; la date complète reste masquée à ANALYSTE. Cette copie doit aussi disparaître lors de la purge. Le SQL de reconstruction et la fiche du catalogue ont été adaptés ; aucune table recréée.
+## Preuves de mise en œuvre
 
-## Protections préparées — 6 novembre 2026
+| Sujet | Résultat observé | Preuve |
+|---|---|---|
+| Année de naissance | birth_year calculée et taguée, date complète masquée à ANALYSTE | Migration 01_annee_naissance.sql ; captures 03c et 15 |
+| Accès | Paie, Queens, analyste et administrateur comparés ; autres tests déclarés distingués dans ACCES.md | Captures 03a à 03d |
+| Extension du périmètre | Queens 143/365 → Queens+Bronx 249/655 → Queens 143/365 | Capture 24 |
+| Reconstruction | 18 contrôles OK après tâches ; masques, filtres, descriptions et conservation maintenus | Capture 15 |
+| Chaîne quotidienne | Trois tâches sous TRANSFORMER, horaire 05:00 Europe/Paris ; lancement manuel réussi | Captures 13, 17, 19, 22 ; départ automatique à l’horaire non observé |
+| Blocage qualité | Seuil temporaire 0 : 25 anomalies, qualité FAILED, reconstruction non démarrée ; mesures durables | Captures 20 et 21 |
+| Rétablissement | Seuil 50, trois tâches réussies ; 7 emails et 4 licences en ALERTE, 25 services sous le seuil | Captures 22 et 23 |
+| Audit | Jointure des historiques sur query_id, quatre métiers et deux rôles techniques, colonnes référencées | Capture 07 ; utilisateurs consultables en privé, consultation nominative non attestée |
+| Lignage | DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS alimentent le mensuel | Capture 04 |
+| Stage | Zéro fichier | Capture 25 |
 
-Retour de Lucas : migration birth_year exécutée. Test rouge sur capture avant politique : accès encore trop large pour ANALYSTE. Masquage et filtre par dépôt désormais préparés dans les scripts 03/04, non confirmés exécutés ; les preuves finales d’accès et de purge restent à compléter. Les colonnes sans tag de nature adapté reçoivent aussi des protections directes, sauf depot, protégé par la règle de lignes et le périmètre de privilèges.
-
-## Preuves d’accès disponibles — 6 novembre 2026
-
-Les captures 03a à 03d attestent la démo agrégée DIM_DRIVER pour RH_PAIE, Queens, ANALYSTE et ACCOUNTADMIN. Elles ne prouvent pas encore tous les accès du registre : GOUVERNANCE, Bronx, RAW/STAGING, activité mensuelle, autres colonnes et stabilité à vérifier dans le cahier. Pas de donnée nominative dans ces preuves.
-
-## État des preuves de conservation
-
-Scripts préparés le 6 novembre 2026, non exécutés. Aucun test de disparition après 24 heures ni d’effacement physique final attesté. La preuve Time Travel utilisera un instant enregistré avant purge et ne publiera que des comptes. Référence du kit pour cette date : 46 chauffeurs expirés, sans service de ces chauffeurs dans la période de services fournie.
-
-## Preuves de conservation reçues
-
-Le 6 novembre 2026 : capture 11 avec quatre rétentions à un jour ; capture 12 avec 354 chauffeurs courants, 400 dans l’état antérieur et zéro copie expirée. Ces preuves couvrent l’exécution et le paramétrage, pas un effacement physique observé après huit jours. La première capture reste la preuve de référence même après rejeu de la purge.
-
-## Qualité observée et automatisation préparée
-
-Capture 06 des résultats manuels vérifiée. Tâches quotidiennes préparées, non exécutées à ce stade ; les preuves planifiées et du blocage restent à ajouter. Aucune correction des valeurs RH déduite du simple contrôle qualité.
-
-## Première chaîne quotidienne réussie — 6 novembre 2026
-
-Captures 13_creation_taches_transformer.png et 14_execution_chaine_reussie.png conservées et copies vérifiées. Trois tâches détenues par TRANSFORMER, dépendances purge → qualité → reconstruction ; trois SUCCEEDED du même groupe, de 14:52:31 à 14:52:42 (+0100). Exécution manuelle de la chaîne configurée à 05:00 Europe/Paris ; déclenchement horaire non encore observé. Résultats qualité issus de la tâche, maintien des protections après tâche et blocage restent à contrôler.
-
-### Validation après la première chaîne — 6 novembre 2026
-
-Captures docs/15_controles_apres_taches.png et docs/16_qualite_par_tache.png : 18 contrôles verts après reconstruction et trois nouvelles mesures qualité conformes (7 emails, 4 licences, 25 services orphelins, seuil bloquant 50). Les preuves confirment le maintien des protections après tâche. Capture du graphe visuel avec exécution réussie encore attendue (BRIEF.md, livrable 2), puis test bloquant et audit.
-
-### Preuves du graphe et préparation du blocage
-
-Captures 17_graphe_taches.png et 18_historique_t_purge.png rangées : structure du graphe et succès de la racine ; capture 14 pour les trois succès. Test de seuil temporaire à 0 dans snowflake/gouvernance/tests/07_preparer_blocage.sql, restauration à 50 dans 08_retablir_seuil.sql. Chaque modification se fait hors exécution active, racine suspendue ; le lancement et le suivi utilisent les scripts rh dédiés. Capturer l’échec attendu et ses mesures avant restauration, puis la chaîne normale réussie. Test de blocage non encore attesté ; audit et lignage restent à réaliser.
-
-### Blocage qualité prouvé — 6 novembre 2026
-
-Captures 19 à 21 conservées : succès du graphe complet initial, puis échec qualité au seuil temporaire 0, reconstruction non démarrée et mesures conservées (25 services orphelins / 0 / ALERTE). T05 validé par les résultats observés. Le rétablissement du seuil normal à 50 et la nouvelle chaîne réussie restent à confirmer avec tests/08_retablir_seuil.sql puis les scripts rh de lancement, suivi et consultation qualité. Audit et lignage restent à réaliser.
-
-### Seuil rétabli et audit préparé — 6 novembre 2026
-
-Captures 22 et 23 : retour à trois tâches réussies et seuil 50, test T06 validé. Exécuter snowflake/gouvernance/06_audit.sql avec ACCOUNTADMIN : capture publique des rôles, objets, colonnes et comptes de requêtes. 06b_audit_detail_prive.sql permet l’identification des comptes utilisateurs uniquement dans Snowflake ; ne pas publier sa sortie. Ces deux scripts sont préparés, non exécutés. Audit limité aux sept derniers jours, délai ACCESS_HISTORY jusqu’à trois heures ; une lecture référencée ne démontre pas que la valeur était affichée en clair. Documentation : https://docs.snowflake.com/en/sql-reference/account-usage/access_history et https://docs.snowflake.com/en/sql-reference/account-usage/query_history (consultées le 6 novembre 2026).
-
-Capture restante : sous TRANSFORMER, Catalog → Explorer → NYC_TAXI → MARTS → MART_DRIVER_MONTHLY → Lineage. Déplier les sources amont pour présenter le chemin RAW → STAGING → MARTS ; graphe automatique à observer avant de le déclarer validé. Documentation : https://docs.snowflake.com/en/user-guide/ui-snowsight-lineage.
-
-### Preuves d’audit et de lignage reçues
-
-Capture 07 : audit exécuté, rôles et colonnes référencées sur DIM_DRIVER. Capture 04 : lignage automatique du mensuel depuis les services STAGING et DIM_DRIVER. Les descriptions et tags de table sont visibles, notamment sensibilité confidentielle et conservation après fin du contrat. Les écarts de justification juridique des durées et de couverture des tags restent signalés ; ces captures ne valent pas conformité générale.
+Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu immédiat du chargement, rejeu des politiques et contrôles additionnels non exécutés restent indiqués dans ACCES.md et SUIVI.md.

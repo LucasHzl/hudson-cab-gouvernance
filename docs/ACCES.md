@@ -1,6 +1,6 @@
 # Accès — carte des droits et cahier de tests
 
-Mis à jour le 6 novembre 2026. **Résultats attendus écrits avant les politiques. Démo agrégée de quatre rôles vérifiée sur captures ; cahier complet encore en cours.** Exécution des politiques 03/04 corrigées confirmée par Lucas et comportements de la démo observés ; rejeu et autres tests à vérifier. SQL de tests : `snowflake/gouvernance/tests/01_tests_acces.sql`. Exécuter les blocs séparément, surtout les refus attendus.
+Mis à jour le 6 novembre 2026. Attendus écrits avant les politiques. Démo de quatre rôles, mapping, purge, tâches, blocage, rétablissement, audit et maintien des protections observés sur captures. Les tests uniquement déclarés par Lucas restent distingués des preuves visuelles ; le rejeu des politiques A14 reste à confirmer. Aucun test non réalisé n’est déclaré vert.
 
 ## 1. Propriété et droits
 
@@ -83,8 +83,8 @@ Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu
 | A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
 | A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | 12 contrôles de reconstruction déclarés OK par Lucas, dont fidélité des emails au pipeline | VERT déclaré |
 | A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Non exécuté | À faire |
-| A15 | Réexécuter les transformations | Tags, commentaires et politiques maintenus ; tests A01-A13 encore satisfaits | Reconstruction des trois MARTS puis 12 contrôles déclarés OK ; vérification après tâches encore à réaliser | VERT déclaré sur le périmètre du test 04 |
-| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Ajouter Bronx donne 283 chauffeurs et 655 lignes mensuelles, sans changer la politique ; restaurer ensuite le mapping | 655 lignes mensuelles rapportées ; restauration 161/365 confirmée ; extension 283/655 non observée ensemble | PARTIEL |
+| A15 | Réexécuter les transformations | Protections, commentaires et catalogue maintenus | Capture 15 : 18 contrôles après tâches OK, dont quatre tables protégées et descriptions présentes | VERT observé sur les 18 contrôles ; ne remplace pas tout A01-A13 |
+| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Références dynamiques après purge : Queens 143/365, extension Bronx 249/655, restauration 143/365 | Capture 24 : trois étapes conformes, aucune politique modifiée | VERT observé |
 | A17 | Rôle SYSADMIN, absent du mapping | Zéro ligne RH | Non exécuté | À faire |
 | A18 | RAW avec ACCOUNTADMIN : noms et emails | Zéro ligne, pas de donnée personnelle à afficher | Non exécuté | À faire |
 | A19 | GOUVERNANCE lit RAW ou STAGING | Refus d’autorisation | Non exécuté | À faire |
@@ -228,3 +228,9 @@ La capture publique attendue provient uniquement de 06_audit.sql. Historique ret
 [Lignage](04_lignage.png) : DIM_DRIVER et STG_RH__DRIVER_SHIFTS alimentent MART_DRIVER_MONTHLY. V_CATALOGUE est visible en aval ; cette dépendance de catalogue n’est pas une preuve de copie des valeurs RH dans la vue.
 
 A16 reste à confirmer : 02_test_mapping.sql utilise maintenant des références calculées sous TRANSFORMER, adaptées à l’état courant après purge. Comparaison du périmètre Queens seul, Queens+Bronx, puis Queens restauré ; trois lignes OK attendues, pas de changement de politique. 09_stage_vide.sql permet de conserver le contrôle LIST à zéro fichier sans recharger les sources purgées.
+
+## Résultats finaux : mapping et stage
+
+[Capture 24](24_mapping_apres_purge.png) : Queens 143 chauffeurs / 365 lignes mensuelles ; extension temporaire Bronx 249 / 655 ; restauration 143 / 365. Les trois statuts sont OK, mapping restauré. Les différences avec les références initiales viennent des 46 chauffeurs purgés ; le mensuel reste inchangé car aucun service de ces partants n’existe dans ce jeu.
+
+[Capture 25](25_stage_vide.png) : stage_fichiers=0, attendu=0, OK. Ce contrôle LIST n’atteste pas à lui seul le rejeu d’un COPY avec les fichiers présents. Les notes chronologiques ci-dessus décrivent les validations successives ; les tableaux de résultats actualisés font foi.
