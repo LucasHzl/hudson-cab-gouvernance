@@ -142,4 +142,4 @@ La taxonomie imposée ne couvre pas toutes les catégories personnelles : invent
 | Lignage | DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS alimentent le mensuel | Capture 04 |
 | Stage | Zéro fichier | Capture 25 |
 
-Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu immédiat du chargement, rejeu des politiques et contrôles additionnels non exécutés restent indiqués dans ACCES.md et SUIVI.md.
+Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu des politiques validé par la capture 26, avec 18 contrôles OK. Rejeu immédiat du chargement et contrôles additionnels non exécutés restent indiqués dans ACCES.md et SUIVI.md.

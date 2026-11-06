@@ -15,7 +15,7 @@
 | Mapping | Trois étapes observées après purge : 143/365, 249/655, 143/365 ; état initial restauré |
 | Conservation | 46 chauffeurs purgés, 354 restants ; historique 400 accessible, rétention un jour sur quatre tables |
 | Qualité et tâches | Trois règles ; trois tâches réussies sous TRANSFORMER ; blocage et retour au seuil 50 observés |
-| Stabilité | 18 contrôles après tâches OK ; rejeu des scripts de politiques A14 encore à confirmer |
+| Stabilité | 18 contrôles après tâches OK ; rejeu des scripts de politiques A14 validé, capture 26 |
 | Audit et lignage | Captures observées ; consultation nominative privée de l’audit non attestée |
 
 ## Captures demandées
@@ -30,11 +30,11 @@
 | Résultats qualité | 06_resultats_qualite_manuels.png, 16 et 23 pour les tâches |
 | Audit | 07_audit.png |
 
-Preuves supplémentaires : 08 volumes, 10 test rouge, 11 rétention, 12 purge/Time Travel, 13 propriété des tâches, 15 protections après tâches, 20/21 blocage, 22/23 rétablissement, 24 mapping, 25 stage vide. Les deux CSV du personnel et les résultats nominatifs ne sont pas publiés.
+Preuves supplémentaires : 08 volumes, 10 test rouge, 11 rétention, 12 purge/Time Travel, 13 propriété des tâches, 15 protections après tâches, 20/21 blocage, 22/23 rétablissement, 24 mapping, 25 stage vide, 26 rejeu des politiques. Les deux CSV du personnel et les résultats nominatifs ne sont pas publiés.
 
 ## Avant le rendu
 
-- Confirmer A14 : rejouer 03_masquage.sql puis 04_acces_depot.sql, puis le test 06_verifier_apres_taches.sql. Capturer les 18 OK ; ne pas relancer installation/chargement pour ce contrôle.
+- A14 confirmé : parcours de rejeu 03_masquage.sql puis 04_acces_depot.sql, suivi du test 06_verifier_apres_taches.sql ; capture 26, 18 OK.
 - Rejeu immédiat du chargement non attesté : ne pas recharger le fichier historique après purge uniquement pour compléter une capture. Décrire cette limite.
 - Tests complémentaires A17-A19 et consultation nominative privée de l’audit non attestés ; aucune réussite inventée.
 - Démonstration avec docs/SOUTENANCE.md. Suspendre T_PURGE après la dernière exécution terminée avec rh/suspendre_taches_rh.sql.

@@ -6,7 +6,7 @@ Projet pédagogique : catalogue, accès, conservation, qualité et audit des don
 
 Implémentation principale exécutée au 6 novembre 2026 : catalogue, accès, purge, qualité, tâches, audit et lignage. Captures conservées dans `docs/` ; 18 contrôles après tâches verts et blocage qualité prouvé, puis seuil normal rétabli. Compte Enterprise AWS Paris ; exécutions réalisées par Lucas, sans connexion directe de l’assistant à Snowflake.
 
-Mapping et stage vide désormais prouvés. À confirmer avant clôture : rejeu des politiques et rejeu immédiat du chargement. Limite persistante : toutes les données personnelles sont inventoriées, mais les valeurs de tags imposées ne couvrent pas toutes leurs catégories ; l’écart est documenté, C20 n’est pas intégralement validé. Voir `docs/SUIVI.md`.
+Mapping et stage vide désormais prouvés. Rejeu des politiques validé par les 18 contrôles de la capture 26. Le rejeu immédiat du chargement reste non formellement prouvé. Limite persistante : toutes les données personnelles sont inventoriées, mais les valeurs de tags imposées ne couvrent pas toutes leurs catégories ; l’écart est documenté, C20 n’est pas intégralement validé. Voir `docs/SUIVI.md`.
 
 ## Gouvernance
 
@@ -108,7 +108,7 @@ Sur un compte neuf : 00_tables_rh.sql crée déjà birth_year ; les transformati
 
 ### Politiques préparées après le test rouge
 
-La [capture avant protection](docs/10_test_analyste_avant_politiques.png) montre 400 dates complètes accessibles à ANALYSTE et zéro prénom masqué. Les politiques sont écrites ensuite : masque par tag pour identité/coordonnées/date/année, masques directs pour les autres attributs, accès par dépôt piloté par ACCES_DEPOT sur les quatre tables RH. CURRENT_ROLE est utilisé explicitement ; rôle absent du mapping : aucune ligne. DIM_DEPOT n’est pas filtrée. Les preuves d’accès sont conservées ; rejeu des scripts de politiques encore à confirmer.
+La [capture avant protection](docs/10_test_analyste_avant_politiques.png) montre 400 dates complètes accessibles à ANALYSTE et zéro prénom masqué. Les politiques sont écrites ensuite : masque par tag pour identité/coordonnées/date/année, masques directs pour les autres attributs, accès par dépôt piloté par ACCES_DEPOT sur les quatre tables RH. CURRENT_ROLE est utilisé explicitement ; rôle absent du mapping : aucune ligne. DIM_DEPOT n’est pas filtrée. Les preuves d’accès sont conservées ; rejeu des scripts de politiques validé, capture 26.
 
 ### Preuves d’accès après politiques
 
@@ -145,6 +145,6 @@ Suivi filtré sur NYC_TAXI.MARTS et les trois noms, dernier graph_run_group_id e
 
 Toutes les catégories de captures demandées figurent dans `docs/SUIVI.md` : veille, tags, comparaison de rôles, lignage, graphe réussi, qualité et audit. Les preuves complémentaires couvrent purge/Time Travel, blocage et rétablissement, reconstruction protégée, mapping et stage vide. Détails et niveau de preuve dans `docs/ACCES.md`.
 
-Le rejeu des politiques A14 et le rejeu immédiat du chargement ne sont pas encore attestés. Les tests complémentaires SYSADMIN et GOUVERNANCE sur RAW/STAGING restent ouverts ; les refus métier/RAW et GOUVERNANCE/DIM_DRIVER ont été déclarés conformes par Lucas. Ne pas assimiler une capture agrégée à la validation de toutes les colonnes.
+Le rejeu des politiques A14 est validé par la capture 26 (18 contrôles OK). Le rejeu immédiat du chargement reste non formellement prouvé. Les tests complémentaires SYSADMIN et GOUVERNANCE sur RAW/STAGING restent ouverts ; les refus métier/RAW et GOUVERNANCE/DIM_DRIVER ont été déclarés conformes par Lucas. Ne pas assimiler une capture agrégée à la validation de toutes les colonnes.
 
 Avant de terminer, préparer la démonstration avec `docs/SOUTENANCE.md`, puis suspendre la racine avec `snowflake/rh/suspendre_taches_rh.sql` après la dernière exécution terminée. Ce script évite les départs automatiques ultérieurs et ne supprime aucun objet. L’assistant a créé des commits locaux ; aucun push effectué.

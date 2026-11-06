@@ -1,6 +1,6 @@
 # Accès — carte des droits et cahier de tests
 
-Mis à jour le 6 novembre 2026. Attendus écrits avant les politiques. Démo de quatre rôles, mapping, purge, tâches, blocage, rétablissement, audit et maintien des protections observés sur captures. Les tests uniquement déclarés par Lucas restent distingués des preuves visuelles ; le rejeu des politiques A14 reste à confirmer. Aucun test non réalisé n’est déclaré vert.
+Mis à jour le 6 novembre 2026. Attendus écrits avant les politiques. Démo de quatre rôles, mapping, purge, tâches, blocage, rétablissement, audit et maintien des protections observés sur captures. Les tests uniquement déclarés par Lucas restent distingués des preuves visuelles ; le rejeu des politiques A14 est validé par la capture 26. Aucun test non réalisé n’est déclaré vert.
 
 ## 1. Propriété et droits
 
@@ -82,7 +82,7 @@ Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu
 | A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
 | A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
 | A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | 12 contrôles de reconstruction déclarés OK par Lucas, dont fidélité des emails au pipeline | VERT déclaré |
-| A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Non exécuté | À faire |
+| A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Capture 26 : les 18 contrôles sont OK après le parcours de rejeu 03/04 puis test 06 | VERT observé sur les 18 contrôles |
 | A15 | Réexécuter les transformations | Protections, commentaires et catalogue maintenus | Capture 15 : 18 contrôles après tâches OK, dont quatre tables protégées et descriptions présentes | VERT observé sur les 18 contrôles ; ne remplace pas tout A01-A13 |
 | A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Références dynamiques après purge : Queens 143/365, extension Bronx 249/655, restauration 143/365 | Capture 24 : trois étapes conformes, aucune politique modifiée | VERT observé |
 | A17 | Rôle SYSADMIN, absent du mapping | Zéro ligne RH | Non exécuté | À faire |
@@ -234,3 +234,7 @@ A16 reste à confirmer : 02_test_mapping.sql utilise maintenant des références
 [Capture 24](24_mapping_apres_purge.png) : Queens 143 chauffeurs / 365 lignes mensuelles ; extension temporaire Bronx 249 / 655 ; restauration 143 / 365. Les trois statuts sont OK, mapping restauré. Les différences avec les références initiales viennent des 46 chauffeurs purgés ; le mensuel reste inchangé car aucun service de ces partants n’existe dans ce jeu.
 
 [Capture 25](25_stage_vide.png) : stage_fichiers=0, attendu=0, OK. Ce contrôle LIST n’atteste pas à lui seul le rejeu d’un COPY avec les fichiers présents. Les notes chronologiques ci-dessus décrivent les validations successives ; les tableaux de résultats actualisés font foi.
+
+## Rejeu des politiques — preuve finale
+
+[Capture 26](26_rejeu_politiques_18_controles.png) fournie après le parcours demandé de rejeu 03/04 puis test 06 : 18 lignes OK. Masques sur 9/7/12/7 colonnes, quatre filtres, 354 chauffeurs cohérents avec la source, aucune valeur d’email masquée dans le pipeline, zéro écart email avec STAGING, descriptions présentes, quatre rétentions à un jour, catalogue 25 lignes accessible à ANALYSTE, 354 prénoms masqués, zéro date complète visible pour ANALYSTE et zéro chauffeur visible pour ACCOUNTADMIN. Le tableau final prouve ces assertions ; il ne remplace pas les tests complémentaires non exécutés.
