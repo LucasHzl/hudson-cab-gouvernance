@@ -199,3 +199,9 @@ Preuves : [création sous TRANSFORMER](13_creation_taches_transformer.png) et [e
 ### Protections après tâches et qualité confirmées
 
 [Capture 15](15_controles_apres_taches.png) : 18 contrôles OK, dont les masques (9/7/12/7 colonnes), quatre politiques de lignes, rétention à un jour sur quatre tables, catalogue métier lisible et descriptions complètes. ANALYSTE voit les 354 prénoms masqués et aucune date de naissance complète ; ACCOUNTADMIN ne voit aucune ligne. [Capture 16](16_qualite_par_tache.png) : trois mesures récentes conformes. Le graphe visuel avec exécution réussie reste une capture exigée explicitement par le brief, distincte du tableau de suivi déjà conservé.
+
+### Graphe visuel et test du blocage préparé
+
+[Capture 17](17_graphe_taches.png) : graphe T_PURGE → T_QUALITE → T_TABLES, propriétaire TRANSFORMER et warehouse NYC_TAXI_WH. État Started = tâche activée, pas succès d’un traitement. [Capture 18](18_historique_t_purge.png) : succès de la racine seule, onglet Task sélectionné. La preuve des trois succès du même groupe reste la capture 14 ; les vues se complètent.
+
+Test T05 préparé dans tests/07_preparer_blocage.sql : changer seulement le seuil de service_rattache à 0, sans injecter de données personnelles. Avec les 25 anomalies existantes, attendre T_PURGE SUCCEEDED, T_QUALITE FAILED, T_TABLES NON_DEMARREE pour le même groupe ; consulter les mesures durables, dont service_rattache 25 / 0 / ALERTE. Après captures, tests/08_retablir_seuil.sql rétablit exactement le bloc normal à 50. Relancer et vérifier trois SUCCEEDED et 25 / 50 / OK pour T06. Ces tests ne sont pas encore exécutés.

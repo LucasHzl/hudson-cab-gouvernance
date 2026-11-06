@@ -153,3 +153,7 @@ Captures 13_creation_taches_transformer.png et 14_execution_chaine_reussie.png c
 ### Validation après la première chaîne — 6 novembre 2026
 
 Captures docs/15_controles_apres_taches.png et docs/16_qualite_par_tache.png : 18 contrôles verts après reconstruction et trois nouvelles mesures qualité conformes (7 emails, 4 licences, 25 services orphelins, seuil bloquant 50). Les preuves confirment le maintien des protections après tâche. Capture du graphe visuel avec exécution réussie encore attendue (BRIEF.md, livrable 2), puis test bloquant et audit.
+
+### Preuves du graphe et préparation du blocage
+
+Captures 17_graphe_taches.png et 18_historique_t_purge.png rangées : structure du graphe et succès de la racine ; capture 14 pour les trois succès. Test de seuil temporaire à 0 dans snowflake/gouvernance/tests/07_preparer_blocage.sql, restauration à 50 dans 08_retablir_seuil.sql. Chaque modification se fait hors exécution active, racine suspendue ; le lancement et le suivi utilisent les scripts rh dédiés. Capturer l’échec attendu et ses mesures avant restauration, puis la chaîne normale réussie. Test de blocage non encore attesté ; audit et lignage restent à réaliser.
