@@ -151,3 +151,7 @@ Capture 06_resultats_qualite_manuels.png rangée et comparée à l’original : 
 ## Première chaîne quotidienne réussie — 6 novembre 2026
 
 Captures 13_creation_taches_transformer.png et 14_execution_chaine_reussie.png conservées et copies vérifiées. Trois tâches détenues par TRANSFORMER, dépendances purge → qualité → reconstruction ; trois SUCCEEDED du même groupe, de 14:52:31 à 14:52:42 (+0100). Exécution manuelle de la chaîne configurée à 05:00 Europe/Paris ; déclenchement horaire non encore observé. Résultats qualité issus de la tâche, maintien des protections après tâche et blocage restent à contrôler.
+
+### Validation après la première chaîne — 6 novembre 2026
+
+Captures docs/15_controles_apres_taches.png et docs/16_qualite_par_tache.png : 18 contrôles verts après reconstruction et trois nouvelles mesures qualité conformes (7 emails, 4 licences, 25 services orphelins, seuil bloquant 50). Les preuves confirment le maintien des protections après tâche. Capture du graphe visuel avec exécution réussie encore attendue (BRIEF.md, livrable 2), puis test bloquant et audit.

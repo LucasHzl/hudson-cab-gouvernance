@@ -185,8 +185,8 @@ Capture 06_resultats_qualite_manuels.png : trois mesures enregistrées au même 
 |---|---|---|---|
 | T01, création du graphe | T_PURGE → T_QUALITE → T_TABLES ; propriétaire TRANSFORMER, suspendues après création | Capture 13 : trois tâches, propriétaire et dépendances conformes | VERT observé |
 | T02, exécution normale | Les trois tâches SUCCEEDED dans le même graph_run_group_id | Capture 14 : trois succès successifs, même groupe 423b069a-0336-48bc-ab69-a4ca254ae315 | VERT observé |
-| T03, qualité par tâche | Trois nouvelles mesures, 4/7/25 et ALERTE/ALERTE/OK | Non exécuté | À faire |
-| T04, contrôles après tâche | 18 contrôles OK : masques/filtre des quatre tables, descriptions, rétention, source et accès | Non exécuté | À faire |
+| T03, qualité par tâche | Trois nouvelles mesures, 4/7/25 et ALERTE/ALERTE/OK | Capture 16 : 4/7/25 conformes, mesure à 14:52:36.203 telle qu’affichée | VERT observé |
+| T04, contrôles après tâche | 18 contrôles OK : masques/filtre des quatre tables, descriptions, rétention, source et accès | Capture 15 : 18 lignes OK, 354 chauffeurs après purge | VERT observé |
 | T05, règle bloquante | Mesure de service_rattache supérieure au seuil de test : T_QUALITE FAILED, T_TABLES non démarrée, résultat enregistré | Non exécuté | À faire |
 | T06, rétablissement | Seuil contractuel 50 rétabli et nouvelle chaîne réussie | Non exécuté | À faire |
 
@@ -195,3 +195,7 @@ La racine est prévue chaque jour à 05:00 Europe/Paris ; ses enfants n’ont pa
 ### Première chaîne exécutée — 6 novembre 2026
 
 Preuves : [création sous TRANSFORMER](13_creation_taches_transformer.png) et [exécution réussie](14_execution_chaine_reussie.png). Purge de 14:52:31.843 à 14:52:34.964, qualité de 14:52:35.914 à 14:52:38.510, reconstruction de 14:52:38.922 à 14:52:42.519, fuseau affiché +0100. Aucun message d’erreur ; même identifiant de groupe. Cela prouve une exécution demandée manuellement de la chaîne prévue quotidiennement, sans encore observer un départ automatique à 05:00. Les 18 contrôles après reconstruction et le test de blocage restent à exécuter.
+
+### Protections après tâches et qualité confirmées
+
+[Capture 15](15_controles_apres_taches.png) : 18 contrôles OK, dont les masques (9/7/12/7 colonnes), quatre politiques de lignes, rétention à un jour sur quatre tables, catalogue métier lisible et descriptions complètes. ANALYSTE voit les 354 prénoms masqués et aucune date de naissance complète ; ACCOUNTADMIN ne voit aucune ligne. [Capture 16](16_qualite_par_tache.png) : trois mesures récentes conformes. Le graphe visuel avec exécution réussie reste une capture exigée explicitement par le brief, distincte du tableau de suivi déjà conservé.
