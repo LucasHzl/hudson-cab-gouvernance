@@ -121,3 +121,7 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 ### Limites connues
 
 Ce que votre mise en œuvre ne couvre pas : deux ou trois lignes, sans détour.
+
+## Évolution préparée — année de naissance
+
+Migration 01_annee_naissance.sql préparée, non exécutée : ajout de MARTS.DIM_DRIVER.birth_year depuis YEAR(birth_date). C’est une donnée personnelle calculée, tag date_naissance, destinée à ANALYSTE et RH_PAIE ; la date complète reste masquée à ANALYSTE. Cette copie doit aussi disparaître lors de la purge. Le SQL de reconstruction et la fiche du catalogue ont été adaptés ; aucune table recréée.

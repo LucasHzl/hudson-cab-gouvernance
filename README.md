@@ -28,8 +28,10 @@ Les deux CSV RH restent locaux et sont exclus par `.gitignore`, même s’ils so
 5. `snowflake/rh/chargement_rh_2_copier.sql`, avec `TRANSFORMER` : charger puis retirer les fichiers du stage. Comptages 400 chauffeurs et 25 951 services confirmés par l’étudiant le 6 novembre 2026 ; capture non reçue. Stage vide rapporté dans le contexte du message « Query produced no results » ; vérification visuelle indépendante et test de rejouabilité encore à consigner.
 6. `snowflake/rh/00_tables_rh.sql`, puis `snowflake/rh/staging/stg_rh__drivers.sql`, `snowflake/rh/staging/stg_rh__driver_shifts.sql`, `snowflake/rh/marts/dim_depot.sql`, `snowflake/rh/marts/dim_driver.sql` et `snowflake/rh/marts/mart_driver_monthly.sql`. Volumétrie avant purge vérifiée sur capture le 6 novembre 2026 : 25 933 services dans STAGING ; 3 dépôts, 400 chauffeurs et 914 lignes mensuelles dans MARTS. Preuve : `docs/08_volumes_initialisation.png`.
 7. `snowflake/gouvernance/01_gouvernance.sql` : démarre avec ACCOUNTADMIN puis passe à GOUVERNANCE ; crée le rôle, le schéma, les trois tags, QUALITE_RESULTATS et les droits utiles à TRANSFORMER. Exécution réussie et trois tags confirmés par l’étudiant le 6 novembre 2026 ; absence de SELECT RH à tester séparément.
-8. Avec TRANSFORMER, exécuter dans `snowflake/rh/catalogue/` : `catalogue_dim_depot.sql`, `catalogue_raw_drivers.sql`, `catalogue_raw_driver_shifts.sql`, `catalogue_dim_driver.sql`, `catalogue_mart_driver_monthly.sql`, puis `vue_catalogue.sql` et `verifier_catalogue.sql`. Scripts préparés, exécution non confirmée. Attendu : 46 colonnes décrites sur cinq tables ; 24 lignes dans V_CATALOGUE avant ajout de colonne. La vue ne porte que sur MARTS pour les futurs lecteurs métier.
-9. Suite à documenter : tests attendus, accès et politiques, conservation, qualité, tâches et audit. Ce README ne permet pas encore de rejouer l’intégralité du projet.
+8. `snowflake/rh/01_annee_naissance.sql`, avec TRANSFORMER : migration rejouable de la table existante, description et tag de birth_year. À faire avant de rejouer la fiche complète DIM_DRIVER sur un ancien schéma. Préparée, exécution non confirmée.
+9. Avec TRANSFORMER, exécuter dans `snowflake/rh/catalogue/` : `catalogue_dim_depot.sql`, `catalogue_raw_drivers.sql`, `catalogue_raw_driver_shifts.sql`, `catalogue_dim_driver.sql`, `catalogue_mart_driver_monthly.sql`, puis `vue_catalogue.sql` et `verifier_catalogue.sql`. État initial à 24 colonnes métier vérifié sur export ; état étendu après migration attendu : 47 colonnes décrites sur cinq tables et 25 lignes dans V_CATALOGUE. La vue porte sur MARTS uniquement.
+10. `snowflake/gouvernance/02_roles_metier.sql` : préparation des quatre rôles pour le compte pédagogique ; script prêt, non exécuté. Cahier des résultats attendus déjà écrit dans `docs/ACCES.md`, SQL de tests dans `snowflake/gouvernance/tests/01_tests_acces.sql`.
+11. Suite à documenter : implémentation des politiques selon ces tests, conservation, qualité, tâches et audit. Ce README ne permet pas encore de rejouer l’intégralité du projet.
 
 ### Comprendre le chargement
 
@@ -81,3 +83,15 @@ L’absence de catégorie adaptée ne dispense pas de protection : les droits, p
 Sources du choix : `CONTRAT_GOUVERNANCE.md` introduction et §3 ; `GUIDE_BRIEF_GOUVERNANCE.md` étape 0, jour 1 étapes 6 et 11 ; `BRIEF.md` C20 ; `docs/VEILLE_MODELE.md` §4. Les transformations SQL sont modifiables ; cela ne donne pas autorisation de réécrire les valeurs imposées du contrat.
 
 Preuves conservées : [export du catalogue](docs/09_catalogue_avant_correction.csv) et [tags des colonnes de DIM_DRIVER](docs/02_tags_dim_driver_avant_correction.png). Les noms historiques « avant correction » ne préjugent pas d’une extension future : ils désignent l’état reçu. Aucun changement Snowflake n’est nécessaire pour appliquer cette décision documentaire.
+
+## Accès : préparation avant les politiques
+
+Le 6 novembre 2026, le cahier `docs/ACCES.md` et le SQL `snowflake/gouvernance/tests/01_tests_acces.sql` sont écrits avant les scripts 03/04. Ils fixent les masques, les volumes par dépôt et les résultats attendus ; aucun résultat obtenu n’est inventé.
+
+Prochain ordre : `snowflake/gouvernance/02_roles_metier.sql` (ACCOUNTADMIN, droits des quatre métiers), puis `snowflake/rh/01_annee_naissance.sql` (TRANSFORMER, migration de la table existante). Ensuite seulement écrire et appliquer les politiques. Les rôles ne sont attribués qu’à l’utilisateur courant de test ; ouverture métier après validation.
+
+Choix de minimisation : conserver la date complète pour RH_PAIE, créer birth_year pour ANALYSTE, masquer la date complète pour l’analyste et les responsables. Dates d’embauche/fin masquées pour ANALYSTE ; activité et statut accessibles pour l’analyse. Pour les responsables, lecture stricte des valeurs autorisées : noms et téléphone, plus identifiant et dépôt nécessaires au périmètre ; les autres attributs restent masqués.
+
+Les scripts de création et transformation de DIM_DRIVER sont adaptés : liste explicite des colonnes de l’INSERT OVERWRITE et calcul de birth_year, sans recréer la table. La migration ajoute une colonne ; après elle, le catalogue MARTS comporte 25 lignes (DIM_DRIVER : 13) et les cinq tables totalisent 47 colonnes, toutes à décrire. Les captures précédentes restent des preuves datées de l’état initial à 24/46 colonnes.
+
+Sur un compte neuf : 00_tables_rh.sql crée déjà birth_year ; les transformations la remplissent. Sur le compte existant : exécuter 01_annee_naissance.sql avant de relancer dim_driver.sql ou catalogue_dim_driver.sql. La migration pose description et tag elle-même ; V_CATALOGUE reflète automatiquement la colonne.

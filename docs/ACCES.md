@@ -1,113 +1,102 @@
-# Les accès — carte des droits et cahier de tests
+# Accès — carte des droits et cahier de tests
 
-Document en cours — 5 novembre 2026. Installation déclarée réussie par l’étudiant ; droits effectifs à vérifier par SHOW GRANTS. Aucun test d’accès exécuté ni résultat vert consigné à ce stade. Les résultats attendus seront écrits avant les politiques.
+Mis à jour le 6 novembre 2026. **Résultats attendus écrits avant les politiques. Aucun test métier déclaré vert à ce stade.** Les politiques 03/04 ne sont pas encore écrites. SQL de tests : `snowflake/gouvernance/tests/01_tests_acces.sql`. Exécuter les blocs séparément, surtout les refus attendus.
 
-- **Partie 1, jours 1 et 2** : la carte des droits, complétée au fur et à mesure que vous créez rôles et objets ;
-- **Partie 2, jour 2** : le cahier de tests, « attendu » écrit avant les politiques, « obtenu » après.
+## 1. Propriété et droits
 
----
+Propriétés ci-dessous prévues par les scripts ; confirmer avec SHOW GRANTS. Le socle 01 a été exécuté selon le retour de Lucas ; script 02 préparé, non exécuté.
 
-## Partie 1 — Carte des droits
-
-À compléter du jour 1 au jour 2. Dans Snowflake, faire une action demande d'être propriétaire de l'objet ou d'avoir reçu un privilège précis. Cette carte vous évite de chercher, à chaque erreur `Insufficient privileges`, quel droit manque et à qui.
-
-Vérifiez chaque ligne dans la documentation des privilèges (ressources du jour 2), puis avec `SHOW GRANTS TO ROLE …`.
-
-### Qui possède quoi
-
-Le propriétaire d'un objet est le rôle qui l'a créé.
-
-| Objet | Propriétaire |
+| Objet | Propriétaire prévu |
 |---|---|
-| Tables de `RAW` et de `MARTS` | le rôle des outils |
-| Schéma `GOUVERNANCE` | |
-| Tags | |
-| Politiques de masquage | |
-| Politique d'accès par ligne | |
-| Table `ACCES_DEPOT` | |
-| Table `QUALITE_RESULTATS` | |
-| Vue `V_CATALOGUE` | |
+| RAW, vues STAGING, tables MARTS et futures tâches | TRANSFORMER pour les objets qu’il crée |
+| Schéma GOUVERNANCE, tags et QUALITE_RESULTATS | GOUVERNANCE |
+| Futures politiques et table ACCES_DEPOT | GOUVERNANCE |
+| V_CATALOGUE | TRANSFORMER |
 
-### Qui fait quoi, avec quel droit
+| Rôle | Droits et objets autorisés | Exclus |
+|---|---|---|
+| RH_PAIE, RESP_DEPOT_QUEENS, RESP_DEPOT_BRONX | USAGE base/warehouse/MARTS/GOUVERNANCE ; SELECT sur DIM_DRIVER, MART_DRIVER_MONTHLY et DIM_DEPOT ; vues actuelles/futures du catalogue | RAW, STAGING, écriture métier |
+| ANALYSTE | Mêmes USAGE ; SELECT sur toutes les tables et vues actuelles/futures de MARTS ; vues actuelles/futures de GOUVERNANCE | RAW, STAGING, écriture métier |
+| GOUVERNANCE | USAGE base/warehouse/RAW/MARTS ; propriété du schéma GOUVERNANCE ; APPLY MASKING POLICY et APPLY ROW ACCESS POLICY sur le compte | SELECT sur le personnel |
+| TRANSFORMER | Droits du script 00 ; USAGE et CREATE VIEW sur GOUVERNANCE, APPLY sur les trois tags, INSERT/SELECT sur QUALITE_RESULTATS | Aucun droit de gestion métier supplémentaire prévu |
 
-| Action | Rôle qui la fait | Privilège nécessaire | Accordé par |
-|---|---|---|---|
-| Créer un tag | `GOUVERNANCE` | `CREATE TAG` sur le schéma, ou en être propriétaire | `ACCOUNTADMIN` |
-| Poser un tag sur une colonne de `DIM_DRIVER` | | | |
-| Créer une politique de masquage | | | |
-| Attacher une politique de masquage à un tag | | | |
-| Ajouter une politique d'accès par ligne à une table | | | |
-| Écrire une ligne dans `QUALITE_RESULTATS` | | | |
-| Lire `DIM_DRIVER` | | | |
-| Exécuter une requête | chaque rôle | | |
+Un USAGE permet d’utiliser un contenant ; SELECT permet d’en lire les objets autorisés. Aucun rôle métier n’hérite de TRANSFORMER. Les rôles métier sont attribués uniquement à l’utilisateur courant pour les tests ; ouverture à d’autres personnes après validation.
 
-### Ce que cette carte permet à un rôle de défaire
+Limites de séparation des fonctions : TRANSFORMER possède les tables et peut modifier certaines protections ; GOUVERNANCE peut modifier les règles ; ACCOUNTADMIN peut changer des habilitations. Les tests prouvent le comportement des rôles actifs à un instant donné, pas l’impossibilité pour un administrateur de reconfigurer le système. Auditer les changements et limiter l’usage de ces rôles.
 
-Pour chaque rôle qui peut poser ou retirer un tag, ou détacher une politique : que pourrait-il démasquer ? Est-ce acceptable, et qui le surveille ?
+## 2. Conventions de masquage prévues
 
----
+- Texte nominatif ou coordonnée : `[MASQUE]` ; NULL source reste NULL.
+- Date, nombre et booléen : NULL quand masqués.
+- `driver_id` : visible aux quatre rôles métier, exception explicite du contrat.
+- `depot` : visible dans le périmètre autorisé pour expliquer et tester le filtrage. DIM_DEPOT reste lisible sans filtre.
+- `birth_date` : date complète pour RH_PAIE et TRANSFORMER ; NULL pour les autres lecteurs métier.
+- `birth_year` : colonne ajoutée, calculée et taguée `date_naissance` ; visible pour ANALYSTE, RH_PAIE et TRANSFORMER. Elle évite de présenter un faux 1er janvier comme date de naissance.
+- Attributs professionnels sans tag adapté : maintien dans l’inventaire ; protections directement par colonne si nécessaire, sans extension des valeurs du contrat.
 
-## Partie 2 — Cahier de tests
+### Matrice colonne par colonne à implémenter
 
-Décidez d'abord à quoi ressemble une valeur masquée pour chaque type de colonne (texte, date) et notez-le ici : ______. Puis remplissez en deux temps : la colonne « attendu » **avant** d'écrire les politiques, à partir de la matrice du contrat ; la colonne « obtenu » après, en exécutant la requête avec le rôle indiqué (`USE ROLE ...`).
-
-Un test est vert quand « obtenu » est identique à « attendu ». Un accès refusé (`Object does not exist or not authorized`) est un résultat comme un autre : écrivez-le.
-
-### Lignes visibles
-
-| N° | Rôle | Requête | Attendu | Obtenu | Vert ? |
-|---|---|---|---|---|---|
-| 1 | `RH_PAIE` | `SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER` | | | |
-| 2 | `RESP_DEPOT_QUEENS` | la même | | | |
-| 3 | `RESP_DEPOT_QUEENS` | `SELECT DISTINCT depot FROM NYC_TAXI.MARTS.DIM_DRIVER` | | | |
-| 4 | `RESP_DEPOT_BRONX` | `SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY` | | | |
-| 5 | `ANALYSTE` | `SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER` | | | |
-| 6 | `GOUVERNANCE` | la même | | | |
-| 7 | `ACCOUNTADMIN` | la même | | | |
-| 8 | `RH_PAIE` | `SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS` | | | |
-| 9 | `ANALYSTE` | `SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVERS` | | | |
-| 9 bis | `ACCOUNTADMIN` | `SELECT first_name, email FROM NYC_TAXI.RAW.DRIVERS LIMIT 3` | | | |
-
-### Valeurs visibles
-
-Pour le chauffeur `D0003`, la valeur que chaque rôle doit lire dans chaque colonne (ou « colonne absente », ou « ligne invisible »).
-
-| Colonne | `RH_PAIE` | `RESP_DEPOT_QUEENS` | `RESP_DEPOT_BRONX` | `ANALYSTE` |
+| Colonnes / famille | RH_PAIE | Responsables de dépôt | ANALYSTE | TRANSFORMER |
 |---|---|---|---|---|
-| nom et prénom | | | | |
-| e-mail | | | | |
-| téléphone | | | | |
-| date de naissance | | | | |
-| numéro de licence | | | | |
-| `driver_name` dans `MART_DRIVER_MONTHLY` | | | | |
+| driver_id | Clair | Clair | Clair | Clair |
+| depot | Tous les dépôts | Leur dépôt seulement | Tous les dépôts | Tous |
+| first_name, last_name, driver_name | Clair | Clair, leur périmètre | Masqué | Clair |
+| phone | Clair | Clair, leur périmètre | Masqué | Clair |
+| email, tlc_license_number | Clair | Masqué | Masqué | Clair |
+| birth_date | Date complète | NULL | NULL | Date complète |
+| birth_year | Année | NULL | Année | Année |
+| hire_date, end_date | Clair | NULL | NULL (minimisation retenue) | Clair |
+| is_active, tenure_years | Clair | NULL | Clair, analyse du personnel | Clair |
+| activity_month, nb_shifts, hours_worked, trips_count, revenue_usd | Clair | NULL (lecture stricte de la matrice, hors exceptions driver_id/depot) | Clair pour analyser l’activité | Clair |
 
-### Le pipeline fonctionne toujours
+Pour les responsables, le contrat ne prévoit en clair que noms/prénoms/téléphone et l’exception driver_id ; depot reste la clé visible de périmètre, comme le prévoit le test DISTINCT depot du modèle. Les autres attributs sont masqués. Ces choix sont de mise en œuvre, sans changement des rôles ni des catégories de tags.
 
-| N° | Vérification | Attendu | Obtenu | Vert ? |
+## 3. Références de volume avant purge
+
+Références anonymes calculées localement sur les fichiers du kit le 6 novembre 2026, en reproduisant le nettoyage du dépôt et le regroupement mensuel des SQL. Totaux confirmés par la capture `08_volumes_initialisation.png` ; répartition par dépôt encore à comparer dans Snowflake. Référence STAGING : dédoublonnage par shift_id ; l’ordre des doublons ex æquo ne doit pas modifier ces regroupements.
+
+| Dépôt | Chauffeurs DIM_DRIVER | Lignes MART_DRIVER_MONTHLY |
+|---|---:|---:|
+| Queens | 161 | 365 |
+| Bronx | 122 | 290 |
+| Brooklyn | 117 | 259 |
+| Total | 400 | 914 |
+
+## 4. Cahier de tests — attendu / obtenu
+
+Tous les tests suivants sont **non exécutés** sauf mention ultérieure. Les références sont celles d’avant purge. Après purge, recalculer les références autorisées avec TRANSFORMER ; ne pas exiger artificiellement 400 chauffeurs.
+
+| Test | Rôle / opération | Attendu après politiques | Obtenu | Statut |
 |---|---|---|---|---|
-| 10 | Avec le rôle des outils, après avoir relancé les fichiers SQL : nombre de lignes de `DIM_DRIVER` | | | |
-| 11 | Avec `RH_PAIE` : l'e-mail de `D0003` est toujours une vraie adresse | | | |
-| 12 | Les politiques sont toujours attachées après la relance (requête de la section 7 du contrat) | | | |
+| A01 | RH_PAIE, comptages | 400 chauffeurs, 914 lignes mensuelles, valeurs autorisées en clair | Non exécuté | À faire |
+| A02 | RESP_DEPOT_QUEENS | 161 chauffeurs, 365 lignes mensuelles ; aucun autre dépôt | Non exécuté | À faire |
+| A03 | RESP_DEPOT_BRONX | 122 chauffeurs, 290 lignes mensuelles ; aucun autre dépôt | Non exécuté | À faire |
+| A04 | ANALYSTE | 400 chauffeurs, 914 lignes mensuelles ; noms/téléphone/email/licence masqués ; année seule | Non exécuté | À faire |
+| A05 | GOUVERNANCE lit DIM_DRIVER | Refus d’autorisation | Non exécuté | À faire |
+| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | Non exécuté | À faire |
+| A07 | RH_PAIE lit RAW.DRIVER_SHIFTS | Refus d’autorisation | Non exécuté | À faire |
+| A08 | ANALYSTE lit RAW.DRIVERS | Refus d’autorisation | Non exécuté | À faire |
+| A09 | Les quatre métiers lisent DIM_DEPOT | Trois garages sans filtre | Non exécuté | À faire |
+| A10 | Responsables : emails/licences/date/année/attributs complémentaires | Aucun email/licence en clair ; dates, année et autres attributs masqués NULL | Non exécuté | À faire |
+| A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Non exécuté | À faire |
+| A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Non exécuté | À faire |
+| A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | Non exécuté | À faire |
+| A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Non exécuté | À faire |
+| A15 | Réexécuter les transformations | Tags, commentaires et politiques maintenus ; tests A01-A13 encore satisfaits | Non exécuté | À faire |
+| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Ajouter Bronx donne 283 chauffeurs et 655 lignes mensuelles, sans changer la politique ; restaurer ensuite le mapping | Non exécuté | À faire |
+| A17 | Rôle SYSADMIN, absent du mapping | Zéro ligne RH | Non exécuté | À faire |
+| A18 | RAW avec ACCOUNTADMIN : noms et emails | Zéro ligne, pas de donnée personnelle à afficher | Non exécuté | À faire |
+| A19 | GOUVERNANCE lit RAW ou STAGING | Refus d’autorisation | Non exécuté | À faire |
+| A20 | Chaque changement de rôle | USE SECONDARY ROLES NONE puis warehouse ; CURRENT_ROLE attendu | Non exécuté | À faire |
 
-Ajoutez vos propres tests : un cahier qui ne contient que des tests verts dès le premier essai n'a probablement pas cherché les cas limites.
+Les assertions de valeurs réelles se font localement dans Snowflake sans copier de noms, emails, téléphones ou licences dans Git. Le SQL publié renvoie des comptes et indicateurs ; il ne publie pas de valeur personnelle du chauffeur témoin. La matrice ci-dessus couvre les mêmes attentes que le tableau de valeurs du modèle.
 
-## Préparation du socle de gouvernance — 6 novembre 2026
+## 5. Ordre de vérification
 
-Source : snowflake/gouvernance/01_gouvernance.sql, préparé mais pas encore exécuté. Les droits ci-dessous sont des droits prévus ; les vérifier avec SHOW GRANTS avant de les déclarer effectifs.
+1. Exécuter le script de rôles puis la migration birth_year et sa vérification (400, zéro incohérence).
+2. Les tests d’identité/filtrage doivent être rouges avant les politiques : constater seulement des agrégats, sans ouvrir les rôles à d’autres utilisateurs. Les refus RAW et GOUVERNANCE peuvent déjà être verts.
+3. Implémenter le masquage et le filtrage d’après ces attentes, puis rejouer les blocs et remplir obtenu.
+4. Réexécuter le pipeline et vérifier la stabilité ; tester le mapping puis restaurer son état.
+5. Ranger les preuves publiques sans données du personnel, indiquer la date et le rôle de chaque exécution.
 
-| Rôle | Objet | Droit prévu | But |
-|---|---|---|---|
-| GOUVERNANCE | Base NYC_TAXI, warehouse NYC_TAXI_WH, schémas RAW et MARTS | USAGE | Désigner les objets et exécuter ses opérations, sans SELECT sur les données RH. |
-| GOUVERNANCE | Schéma GOUVERNANCE | OWNERSHIP | Créer tags, politiques et tables de gouvernance ; ne confère pas la propriété des tables RH. |
-| GOUVERNANCE | Compte | APPLY MASKING POLICY et APPLY ROW ACCESS POLICY | Attacher les politiques aux tables RH détenues par TRANSFORMER. |
-| TRANSFORMER | Schéma GOUVERNANCE | USAGE, CREATE VIEW | Accéder aux objets autorisés et créer le futur catalogue. |
-| TRANSFORMER | Chacun des trois tags | APPLY | Cataloguer les tables qu’il possède. |
-| TRANSFORMER | QUALITE_RESULTATS | INSERT, SELECT | Enregistrer et consulter les contrôles. |
-
-GOUVERNANCE crée et possède les tags et QUALITE_RESULTATS. Le fait de posséder des métadonnées et résultats de qualité n’autorise pas à lire les fiches personnelles. Aucun rôle métier créé à cette étape. L’attribution du rôle à l’utilisateur courant permet de l’endosser ; les privilèges sur les données restent portés par les rôles.
-
-Vérification négative prévue après le socle : avec GOUVERNANCE, rôles secondaires désactivés, SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER doit être refusé. Résultat obtenu : non exécuté.
-
-### Retour d’exécution du socle
-
-Le 6 novembre 2026, Lucas confirme que 01_gouvernance.sql s’exécute et affiche les trois tags. Cette déclaration ne remplace pas le test négatif de lecture RH par GOUVERNANCE ni les tests métier. Le catalogue est créé par TRANSFORMER ; ses futurs droits métier restent à attribuer et à vérifier.
+Sources : contrat §4 ; guide jour 2 ; documentation officielle Snowflake [GRANT](https://docs.snowflake.com/en/sql-reference/sql/grant-privilege), consultée le 6 novembre 2026.

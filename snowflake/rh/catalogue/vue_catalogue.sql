@@ -50,4 +50,4 @@ COMMENT ON VIEW NYC_TAXI.GOUVERNANCE.V_CATALOGUE IS
 
 SELECT table_name, COUNT(*) AS colonnes, COUNT_IF(description IS NULL) AS sans_description
 FROM NYC_TAXI.GOUVERNANCE.V_CATALOGUE GROUP BY table_name ORDER BY table_name;
--- Attendu avant ajout éventuel de colonne : DIM_DEPOT 4, DIM_DRIVER 12, MART_DRIVER_MONTHLY 8 ; zéro sans_description.
+-- Attendu avant ajout éventuel de colonne : DIM_DEPOT 4, DIM_DRIVER 13, MART_DRIVER_MONTHLY 8 ; zéro sans_description.

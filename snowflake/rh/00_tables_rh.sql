@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS NYC_TAXI.MARTS.DIM_DRIVER (
     hire_date            DATE,
     end_date             DATE,
     is_active            BOOLEAN,
-    tenure_years         FLOAT
+    tenure_years         FLOAT,
+    birth_year           NUMBER(4,0)
 );
 
 CREATE TABLE IF NOT EXISTS NYC_TAXI.MARTS.MART_DRIVER_MONTHLY (

@@ -17,7 +17,7 @@ Les validations ci-dessous sont déclarées par l'étudiant, sauf mention contra
 - [ ] Chargement rejouable, volumes contrôlés et stage vide.
 - [x] Catalogue : 24 colonnes métier décrites, observées dans l’export ; fiches RAW préparées.
 - [ ] Catalogue : vérifier RAW et lecture métier ; couverture des tags limitée par la taxonomie imposée, écart documenté.
-- [ ] Matrice et tests attendus écrits AVANT les politiques.
+- [x] Matrice et tests attendus écrits AVANT les politiques ; SQL de tests prêt, exécution à faire.
 - [ ] Rôles, masquage et filtrage par dépôt ; résultats obtenus consignés.
 - [ ] Purge dans toutes les copies et rétention Time Travel.
 - [ ] Qualité et chaîne de tâches ; preuve du blocage.
@@ -100,3 +100,9 @@ Brief, contrat, guide, ressources, note de présentation et modèles relus. Le c
 La couverture intégrale du tag et le respect sémantique des six valeurs sont incompatibles pour l’inventaire large : C20 ne doit pas être déclaré entièrement validé. Cette limite documentaire n’empêche pas de réaliser les autres exigences : droits et tests avant politiques, filtrage par table de correspondance, purge complète, trois contrôles dont service_rattache, chaîne de tâches, audit et preuves de maintien des protections.
 
 Les entrées précédentes sont historiques ; la décision présente remplace la proposition d’extension. Rien à relancer dans Snowflake pour cette décision.
+
+## Versionnement et préparation des accès — 6 novembre 2026
+
+Commit local 03fdf0e : kit, veille, catalogue et preuves. Contrôle de contenu avant ajout : aucun CSV RH suivi, pas de clé ou motif de secret détecté, aucune valeur d’email/téléphone/licence du CSV dans les textes candidats. Les captures ne montrent que confirmations et métadonnées.
+
+Cahier de tests attendu rédigé avant toute politique, résultats tous non exécutés. Références de dépôts calculées localement : chauffeurs Queens 161 / Bronx 122 / Brooklyn 117 ; lignes mensuelles 365 / 290 / 259. Script 02_roles_metier.sql et migration birth_year préparés, non exécutés. DIM_DRIVER passe à 13 colonnes, le catalogue métier à 25 après migration ; les anciennes captures restent historiques. Prochain contrôle : exécuter 02 puis 01_annee_naissance et transmettre seulement le résultat agrégé.

@@ -33,3 +33,10 @@ ALTER TABLE NYC_TAXI.MARTS.DIM_DRIVER MODIFY COLUMN tlc_license_number SET TAG N
 
 SELECT column_name, comment FROM NYC_TAXI.INFORMATION_SCHEMA.COLUMNS WHERE table_schema = 'MARTS' AND table_name = 'DIM_DRIVER' ORDER BY ordinal_position;
 SELECT column_name, tag_name, tag_value FROM TABLE(NYC_TAXI.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('NYC_TAXI.MARTS.DIM_DRIVER', 'table'));
+
+-- Colonne ajoutée par rh/01_annee_naissance.sql ; exécuter cette migration avant
+-- de rejouer la fiche complète sur une installation déjà existante.
+COMMENT ON COLUMN NYC_TAXI.MARTS.DIM_DRIVER.birth_year IS
+  'Donnée personnelle. Année de naissance calculée ; ne donne ni le mois ni le jour à ANALYSTE.';
+ALTER TABLE NYC_TAXI.MARTS.DIM_DRIVER MODIFY COLUMN birth_year
+  SET TAG NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE = 'date_naissance';
