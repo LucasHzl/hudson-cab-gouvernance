@@ -147,3 +147,7 @@ Qualité préparée : trois requêtes scalaires dont la licence fournie, plus qu
 ## Qualité confirmée et chaîne préparée — 6 novembre 2026
 
 Capture 06_resultats_qualite_manuels.png rangée et comparée à l’original : email_valide 7 ALERTE, licence_unique 4 ALERTE, service_rattache 25/50 OK, même instant de mesure. Les trois requêtes sont opérationnelles manuellement. Chaîne T_PURGE → T_QUALITE → T_TABLES préparée sous TRANSFORMER, horaire Paris, création suspendue ; lancement, suivi, lecture qualité et suspension séparés. Test après tâches de 18 contrôles prêt, non exécuté. Le suivi groupe les tâches de la même exécution. Blocage, audit et lignage encore à réaliser.
+
+## Première chaîne quotidienne réussie — 6 novembre 2026
+
+Captures 13_creation_taches_transformer.png et 14_execution_chaine_reussie.png conservées et copies vérifiées. Trois tâches détenues par TRANSFORMER, dépendances purge → qualité → reconstruction ; trois SUCCEEDED du même groupe, de 14:52:31 à 14:52:42 (+0100). Exécution manuelle de la chaîne configurée à 05:00 Europe/Paris ; déclenchement horaire non encore observé. Résultats qualité issus de la tâche, maintien des protections après tâche et blocage restent à contrôler.
