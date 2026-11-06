@@ -133,3 +133,7 @@ ACCOUNTADMIN 0/0 et Queens restauré 161/365 confirmés par Lucas. Extension du 
 ### Correctif du test de reconstruction — 6 novembre 2026
 
 Erreur signalée sur les mots « vide » et « la » : deux commentaires avaient été extraits comme instructions lors de la préparation du script 04. Les deux lignes sont retirées ; les trois INSERT OVERWRITE INTO ont été comparés intégralement aux fichiers rh/marts correspondants, avec recherche ancrée en début de ligne SQL. Ce contrôle local ne confirme pas l’exécution Snowflake. Script corrigé à relancer entièrement ; aucune table, politique ou tag supprimé. Le test de reconstruction reste en attente de résultat.
+
+## Reconstruction confirmée, conservation préparée — 6 novembre 2026
+
+Lucas confirme le succès du script 04 corrigé : douze contrôles attendus OK. Statut déclaré, sans capture dédiée. Test de mapping étendu pas encore attesté. conservation_rh.sql, purge_rh.sql et tests/05_preuve_purge.sql créés ; attentes et références locales consignées avant exécution. La purge touche les quatre tables, pas seulement RAW.DRIVERS ; Time Travel réglé séparément à un jour. Prochaine étape : vérifier le mapping avant purge, exécuter conservation puis preuve de purge et transmettre les résultats agrégés.

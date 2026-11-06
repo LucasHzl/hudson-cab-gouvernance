@@ -81,9 +81,9 @@ Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu
 | A10 | Responsables : emails/licences/date/année/attributs complémentaires | Aucun email/licence en clair ; dates, année et autres attributs masqués NULL | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
 | A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
 | A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | Contrôles de l’état actuel déclarés conformes dans 01 ; reconstruction puis répétition encore à effectuer | PARTIEL |
+| A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | 12 contrôles de reconstruction déclarés OK par Lucas, dont fidélité des emails au pipeline | VERT déclaré |
 | A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Non exécuté | À faire |
-| A15 | Réexécuter les transformations | Tags, commentaires et politiques maintenus ; tests A01-A13 encore satisfaits | Non exécuté | À faire |
+| A15 | Réexécuter les transformations | Tags, commentaires et politiques maintenus ; tests A01-A13 encore satisfaits | Reconstruction des trois MARTS puis 12 contrôles déclarés OK ; vérification après tâches encore à réaliser | VERT déclaré sur le périmètre du test 04 |
 | A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Ajouter Bronx donne 283 chauffeurs et 655 lignes mensuelles, sans changer la politique ; restaurer ensuite le mapping | 655 lignes mensuelles rapportées ; restauration 161/365 confirmée ; extension 283/655 non observée ensemble | PARTIEL |
 | A17 | Rôle SYSADMIN, absent du mapping | Zéro ligne RH | Non exécuté | À faire |
 | A18 | RAW avec ACCOUNTADMIN : noms et emails | Zéro ligne, pas de donnée personnelle à afficher | Non exécuté | À faire |
@@ -148,3 +148,17 @@ Lucas confirme ACCOUNTADMIN 0/0 et Queens restauré à 161/365. L’étape éten
 ### Correctif du test de reconstruction — 6 novembre 2026
 
 Erreur signalée sur les mots « vide » et « la » : deux commentaires avaient été extraits comme instructions lors de la préparation du script 04. Les deux lignes sont retirées ; les trois INSERT OVERWRITE INTO ont été comparés intégralement aux fichiers rh/marts correspondants, avec recherche ancrée en début de ligne SQL. Ce contrôle local ne confirme pas l’exécution Snowflake. Script corrigé à relancer entièrement ; aucune table, politique ou tag supprimé. Le test de reconstruction reste en attente de résultat.
+
+## 8. Conservation et purge — tests attendus avant exécution
+
+Reconstruction 04 corrigée déclarée OK par Lucas le 6 novembre 2026 ; pas de capture dédiée reçue. L’extension du mapping reste à confirmer par le tableau de trois étapes avant de modifier les volumes.
+
+| Test | Attendu | Obtenu | Statut |
+|---|---|---|---|
+| R01, conservation_rh.sql | Quatre tables RH, retention_time=1 | Non exécuté | À faire |
+| R02, purge complète | Aucun chauffeur expiré ni copie liée dans RAW/MARTS | Non exécuté | À faire |
+| R03, contrôle avant/après | Au 6 novembre 2026 : 46 concernés, 400→354 chauffeurs ; 25 951 services inchangés car aucun ne concerne ces partants | Non exécuté | À faire |
+| R04, Time Travel | Après purge, l’état RAW.DRIVERS immédiatement antérieur reste lisible et compte 400 chauffeurs | Non exécuté | À faire |
+| R05, délai de Time Travel | Paramètre limité à un jour ; pas d’essai réel après 24 heures à ce stade | Non exécuté | À faire |
+
+Tests SQL : conservation_rh.sql puis tests/05_preuve_purge.sql. Le second exécute la purge : ne pas purger d’abord ailleurs, sinon la première preuve portera sur un état déjà purgé. Valeurs locales de référence calculées à partir du kit, sans publication d’IDs. Les futures tâches réutiliseront le même bloc de purge. Données historiques soumises aux droits et politiques actuels ; ne pas créer de clone personnel pour cette démonstration.

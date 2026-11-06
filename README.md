@@ -32,7 +32,8 @@ Les deux CSV RH restent locaux et sont exclus par `.gitignore`, même s’ils so
 9. Avec TRANSFORMER, exécuter dans `snowflake/rh/catalogue/` : `catalogue_dim_depot.sql`, `catalogue_raw_drivers.sql`, `catalogue_raw_driver_shifts.sql`, `catalogue_dim_driver.sql`, `catalogue_mart_driver_monthly.sql`, puis `vue_catalogue.sql` et `verifier_catalogue.sql`. État initial à 24 colonnes métier vérifié sur export ; état étendu après migration attendu : 47 colonnes décrites sur cinq tables et 25 lignes dans V_CATALOGUE. La vue porte sur MARTS uniquement.
 10. `snowflake/gouvernance/02_roles_metier.sql` : préparation des quatre rôles pour le compte pédagogique ; exécution réussie déclarée par Lucas le 6 novembre 2026. Cahier des résultats attendus déjà écrit dans `docs/ACCES.md`, SQL de tests dans `snowflake/gouvernance/tests/01_tests_acces.sql`.
 11. `snowflake/gouvernance/03_masquage.sql`, puis `04_acces_depot.sql`, avec GOUVERNANCE ; exécution réussie confirmée et démo de quatre rôles vérifiée sur captures. Rejouer ensuite les blocs de `tests/01_tests_acces.sql` et la démonstration `tests/03_demo_quatre_roles.sql`.
-12. Suite à documenter : conservation, qualité, tâches et audit. Ce README ne permet pas encore de rejouer l’intégralité du projet.
+12. `snowflake/rh/conservation_rh.sql` (quatre rétentions à un jour), puis `snowflake/gouvernance/tests/05_preuve_purge.sql` pour la première purge avec preuve avant/après et Time Travel. Le second contient le même bloc que `snowflake/rh/purge_rh.sql` ; ne pas lancer ce dernier avant la première démonstration. Scripts préparés, non exécutés.
+13. Suite à documenter : qualité, tâches et audit. Ce README ne permet pas encore de rejouer l’intégralité du projet.
 
 ### Comprendre le chargement
 
@@ -108,3 +109,13 @@ Le 6 novembre 2026, les quatre résultats de `tests/03_demo_quatre_roles.sql` so
 ### Vérifications synthétiques avant purge
 
 Dans `snowflake/gouvernance/tests/`, exécuter `02_test_mapping.sql` en entier dans une même feuille : trois étapes dans le résultat final, toutes attendues OK. Il ajoute puis retire la seule habilitation de test ; pas de changement des politiques. Ensuite, `04_reconstruction_verification.sql` en entier : reconstruit les trois tables MARTS avec les INSERT OVERWRITE et affiche 12 contrôles, tous attendus OK avant purge. Scripts prêts mais résultats encore à confirmer.
+
+### Conservation et purge : choix de mise en œuvre
+
+R1 est implémentée avec end_date strictement antérieure à DATEADD(year,-5,CURRENT_DATE()) ; un chauffeur en poste (NULL) reste conservé. Les copies MARTS et services RAW sont supprimées avant RAW.DRIVERS, dans une transaction avec rollback sur erreur. Les vues STAGING reflètent la source ; aucune table ni protection n’est recréée. La table de dépôts, non personnelle, reste intacte.
+
+Au 6 novembre 2026, référence locale du kit : 46 chauffeurs concernés, donc 354 restants ; aucun service ne concerne ces 46 chauffeurs dans le jeu fourni, donc 25 951 services restent. Le DELETE des services est néanmoins indispensable pour les futurs fichiers. Les 25 services orphelins existants ne sont pas automatiquement attribuables à des chauffeurs expirés : ils relèvent du contrôle service_rattache.
+
+R2 est un paramètre de table, pas le tag DUREE_CONSERVATION. Les quatre tables permanentes sont limitées à un jour de Time Travel, suivi des sept jours de Fail-safe documentés dans la veille. La purge quotidienne introduira un délai de passage allant jusqu’à environ 24 heures ; les CSV locaux et sauvegardes externes ne sont pas effacés par une requête Snowflake. Si un fichier complet historique est rechargé, la purge doit être réappliquée avant reconstruction et ouverture des usages ; la déduplication de COPY ne remplace pas cette règle.
+
+Sources techniques consultées le 6 novembre 2026 : [Time Travel](https://docs.snowflake.com/en/user-guide/data-time-travel), [AT/BEFORE](https://docs.snowflake.com/en/sql-reference/constructs/at-before). Les scripts sont préparés, leur exécution reste à confirmer.

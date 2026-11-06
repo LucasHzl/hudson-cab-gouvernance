@@ -104,11 +104,11 @@ Chaque réponse de la colonne de droite doit pouvoir être vérifiée dans l'ent
 
 | Règle | Comment elle est appliquée | Preuve |
 |---|---|---|
-| R1 : suppression 5 ans après la fin du contrat | | |
-| R2 : pas de restauration au-delà de 1 jour | | |
-| R3 : pas de fichier sur le stage | | |
+| R1 : suppression 5 ans après la fin du contrat | Purge préparée des quatre tables ; transaction, suppression des copies avant la source. Exécution non confirmée. | rh/purge_rh.sql et gouvernance/tests/05_preuve_purge.sql |
+| R2 : pas de restauration au-delà de 1 jour | DATA_RETENTION_TIME_IN_DAYS=1 prévu sur les quatre tables ; Fail-safe distinct. Exécution non confirmée. | rh/conservation_rh.sql, sortie retention_time |
+| R3 : pas de fichier sur le stage | PURGE=TRUE dans le COPY ; stage vide rapporté, dernière vérification LIST encore à conserver. | rh/chargement_rh_2_copier.sql |
 
-Délai réel entre l'exécution de la purge et la disparition définitive d'une donnée dans Snowflake, en tenant compte de Time Travel et de Fail-safe : ______ jours.
+Délai réel entre l'exécution de la purge et la disparition définitive d'une donnée dans Snowflake, en tenant compte de Time Travel et de Fail-safe : Un jour de Time Travel puis sept jours de Fail-safe sur les tables permanentes : succession nominale de huit jours, sans garantie d’effacement physique à heure fixe. Les requêtes longues, copies externes et fichiers locaux doivent aussi être pris en compte.
 
 ### Comment on le contrôle
 
@@ -133,3 +133,7 @@ Retour de Lucas : migration birth_year exécutée. Test rouge sur capture avant 
 ## Preuves d’accès disponibles — 6 novembre 2026
 
 Les captures 03a à 03d attestent la démo agrégée DIM_DRIVER pour RH_PAIE, Queens, ANALYSTE et ACCOUNTADMIN. Elles ne prouvent pas encore tous les accès du registre : GOUVERNANCE, Bronx, RAW/STAGING, activité mensuelle, autres colonnes et stabilité à vérifier dans le cahier. Pas de donnée nominative dans ces preuves.
+
+## État des preuves de conservation
+
+Scripts préparés le 6 novembre 2026, non exécutés. Aucun test de disparition après 24 heures ni d’effacement physique final attesté. La preuve Time Travel utilisera un instant enregistré avant purge et ne publiera que des comptes. Référence du kit pour cette date : 46 chauffeurs expirés, sans service de ces chauffeurs dans la période de services fournie.
