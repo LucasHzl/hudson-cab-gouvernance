@@ -129,3 +129,7 @@ Migration 01_annee_naissance.sql préparée, non exécutée : ajout de MARTS.DIM
 ## Protections préparées — 6 novembre 2026
 
 Retour de Lucas : migration birth_year exécutée. Test rouge sur capture avant politique : accès encore trop large pour ANALYSTE. Masquage et filtre par dépôt désormais préparés dans les scripts 03/04, non confirmés exécutés ; les preuves finales d’accès et de purge restent à compléter. Les colonnes sans tag de nature adapté reçoivent aussi des protections directes, sauf depot, protégé par la règle de lignes et le périmètre de privilèges.
+
+## Preuves d’accès disponibles — 6 novembre 2026
+
+Les captures 03a à 03d attestent la démo agrégée DIM_DRIVER pour RH_PAIE, Queens, ANALYSTE et ACCOUNTADMIN. Elles ne prouvent pas encore tous les accès du registre : GOUVERNANCE, Bronx, RAW/STAGING, activité mensuelle, autres colonnes et stabilité à vérifier dans le cahier. Pas de donnée nominative dans ces preuves.

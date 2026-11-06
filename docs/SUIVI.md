@@ -18,7 +18,8 @@ Les validations ci-dessous sont déclarées par l'étudiant, sauf mention contra
 - [x] Catalogue : 24 colonnes métier décrites, observées dans l’export ; fiches RAW préparées.
 - [ ] Catalogue : vérifier RAW et lecture métier ; couverture des tags limitée par la taxonomie imposée, écart documenté.
 - [x] Matrice et tests attendus écrits AVANT les politiques ; SQL de tests prêt, exécution à faire.
-- [ ] Rôles, masquage et filtrage par dépôt ; résultats obtenus consignés.
+- [x] Rôles et politiques exécutés ; démo agrégée de quatre rôles conforme et prouvée.
+- [ ] Cahier complet : Bronx, autres colonnes, mensuel, refus d’accès, catalogue, mapping et rejeu à vérifier.
 - [ ] Purge dans toutes les copies et rétention Time Travel.
 - [ ] Qualité et chaîne de tâches ; preuve du blocage.
 - [ ] Audit, lignage et vérification du maintien des protections.
@@ -31,8 +32,8 @@ Les validations ci-dessous sont déclarées par l'étudiant, sauf mention contra
 | Preuve | Nom proposé | État |
 |---|---|---|
 | Abonnement réel à l'outil de veille | 01_abonnement_veille.png | Capture vérifiée : inscription CNIL enregistrée, 6 novembre 2026 |
-| Tags d'une table dans Snowsight | 02_tags_table.png | À faire |
-| Même requête avec deux rôles, comparaison lisible | 03_comparaison_roles.png | À faire |
+| Tags d'une table dans Snowsight | 02_tags_dim_driver_avant_correction.png | Reçue ; couverture incomplète de la taxonomie signalée |
+| Même requête avec deux rôles, comparaison lisible | 03a à 03d_acces_*.png | Quatre captures vérifiées : démo conforme |
 | Lignage de MART_DRIVER_MONTHLY | 04_lignage.png | À faire |
 | Graphe des tâches et exécution réussie | 05_taches_succes.png | À faire |
 | Résultats de QUALITE_RESULTATS | 06_qualite.png | À faire |
@@ -116,3 +117,7 @@ Capture 10_test_analyste_avant_politiques.png rangée et copie vérifiée : 400 
 Estimation indicative : environ 45 % du projet, selon le travail exécuté et prouvé, pas une note ni un calcul officiel des compétences. Veille/inventaire et pipeline initial avancés ; accès en validation ; conservation, qualité, tâches, audit et démonstration finale encore à réaliser.
 
 Erreur de compilation signalée dans 03_masquage.sql sur l’attache groupée au tag. Correction en trois ALTER TAG distincts, conservation de FORCE pour le rejeu. Aucune politique ni attache existante supprimée. Résultat d’exécution du correctif à attendre avant de continuer le cahier de tests.
+
+## Quatre preuves d’accès reçues — 6 novembre 2026
+
+03a RH_PAIE : 400 / 0 / 400 / 400 ; 03b Queens : 161 / 0 / 0 / 0 ; 03c ANALYSTE : 400 / 400 / 0 / 400 ; 03d ACCOUNTADMIN : 0 / 0 / 0 / 0. Captures renommées et rangées, copies identiques vérifiées. Résultats D01-D04 de la démo verts dans ACCES.md. Tests plus larges A01/A02/A04/A06/A11 indiqués partiels ; pas de conclusion sur les attributs non affichés ou sur MART_DRIVER_MONTHLY. Prochaines validations : cahier complet, mapping et reconstruction avant purge.

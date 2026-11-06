@@ -1,10 +1,10 @@
 # Accès — carte des droits et cahier de tests
 
-Mis à jour le 6 novembre 2026. **Résultats attendus écrits avant les politiques. Aucun test métier déclaré vert à ce stade.** Les politiques 03/04 sont maintenant préparées après le commit des tests ; exécution non confirmée. SQL de tests : `snowflake/gouvernance/tests/01_tests_acces.sql`. Exécuter les blocs séparément, surtout les refus attendus.
+Mis à jour le 6 novembre 2026. **Résultats attendus écrits avant les politiques. Démo agrégée de quatre rôles vérifiée sur captures ; cahier complet encore en cours.** Exécution des politiques 03/04 corrigées confirmée par Lucas et comportements de la démo observés ; rejeu et autres tests à vérifier. SQL de tests : `snowflake/gouvernance/tests/01_tests_acces.sql`. Exécuter les blocs séparément, surtout les refus attendus.
 
 ## 1. Propriété et droits
 
-Propriétés ci-dessous prévues par les scripts ; confirmer avec SHOW GRANTS. Le socle 01 a été exécuté selon le retour de Lucas ; script 02 préparé, non exécuté.
+Propriétés ci-dessous prévues par les scripts ; confirmer avec SHOW GRANTS. Le socle 01 a été exécuté selon le retour de Lucas ; script 02 exécuté selon le retour de Lucas.
 
 | Objet | Propriétaire prévu |
 |---|---|
@@ -64,22 +64,22 @@ Références anonymes calculées localement sur les fichiers du kit le 6 novembr
 
 ## 4. Cahier de tests — attendu / obtenu
 
-Tous les tests suivants sont **non exécutés** sauf mention ultérieure. Les références sont celles d’avant purge. Après purge, recalculer les références autorisées avec TRANSFORMER ; ne pas exiger artificiellement 400 chauffeurs.
+Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu. La démo ne suffit pas à valider toutes les colonnes ni les deux tables métier. Les références sont celles d’avant purge. Après purge, recalculer les références autorisées avec TRANSFORMER ; ne pas exiger artificiellement 400 chauffeurs.
 
 | Test | Rôle / opération | Attendu après politiques | Obtenu | Statut |
 |---|---|---|---|---|
 | A00 | ANALYSTE, test avant politiques | Cible finale : 400 chauffeurs / 400 prénoms masqués / 0 date complète | Capture : 400 / 0 / 400 | ROUGE observé avant protection |
-| A01 | RH_PAIE, comptages | 400 chauffeurs, 914 lignes mensuelles, valeurs autorisées en clair | Non exécuté | À faire |
-| A02 | RESP_DEPOT_QUEENS | 161 chauffeurs, 365 lignes mensuelles ; aucun autre dépôt | Non exécuté | À faire |
+| A01 | RH_PAIE, comptages | 400 chauffeurs, 914 lignes mensuelles, valeurs autorisées en clair | DIM_DRIVER : 400 chauffeurs, 0 prénom masqué, 400 dates et années visibles ; mensuel/autres valeurs à tester | PARTIEL, capture 03a |
+| A02 | RESP_DEPOT_QUEENS | 161 chauffeurs, 365 lignes mensuelles ; aucun autre dépôt | DIM_DRIVER : 161 chauffeurs, 0 prénom masqué, 0 date/année visible ; mensuel et contrôle des autres dépôts à tester | PARTIEL, capture 03b |
 | A03 | RESP_DEPOT_BRONX | 122 chauffeurs, 290 lignes mensuelles ; aucun autre dépôt | Non exécuté | À faire |
-| A04 | ANALYSTE | 400 chauffeurs, 914 lignes mensuelles ; noms/téléphone/email/licence masqués ; année seule | Non exécuté | À faire |
+| A04 | ANALYSTE | 400 chauffeurs, 914 lignes mensuelles ; noms/téléphone/email/licence masqués ; année seule | DIM_DRIVER : 400 chauffeurs, 400 prénoms masqués, 0 date complète, 400 années ; autres champs/mensuel à tester | PARTIEL, capture 03c |
 | A05 | GOUVERNANCE lit DIM_DRIVER | Refus d’autorisation | Non exécuté | À faire |
-| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | Non exécuté | À faire |
+| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | DIM_DRIVER : 0 ligne ; RAW.DRIVER_SHIFTS à tester | PARTIEL, capture 03d |
 | A07 | RH_PAIE lit RAW.DRIVER_SHIFTS | Refus d’autorisation | Non exécuté | À faire |
 | A08 | ANALYSTE lit RAW.DRIVERS | Refus d’autorisation | Non exécuté | À faire |
 | A09 | Les quatre métiers lisent DIM_DEPOT | Trois garages sans filtre | Non exécuté | À faire |
 | A10 | Responsables : emails/licences/date/année/attributs complémentaires | Aucun email/licence en clair ; dates, année et autres attributs masqués NULL | Non exécuté | À faire |
-| A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Non exécuté | À faire |
+| A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Prénoms 400 masqués, dates complètes 0, années 400 ; noms/email/téléphone/licence à tester | PARTIEL, capture 03c |
 | A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Non exécuté | À faire |
 | A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | Non exécuté | À faire |
 | A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Non exécuté | À faire |
@@ -117,3 +117,16 @@ Références techniques consultées le 6 novembre 2026 : [ALTER TAG](https://doc
 ### Erreur de compilation du masquage — 6 novembre 2026
 
 Lucas signale une erreur de syntaxe sur la deuxième politique du bloc d’attache groupée au tag (ligne 42 de la version initiale). Correctif local : trois instructions ALTER TAG SET MASKING POLICY distinctes avec FORCE, une par type. L’exécution initiale a pu créer les premières politiques sans les attacher ; le script peut être repris depuis le début. Statut : correctif préparé, compilation et tests après protection à confirmer. Aucun test vert ajouté sur cette seule correction.
+
+## 7. Démonstration verte observée — 6 novembre 2026
+
+Même requête agrégée du script tests/03_demo_quatre_roles.sql, quatre captures reçues et vérifiées. Colonnes : rôle, nombre de chauffeurs, prénoms masqués, dates complètes visibles, années visibles. Ces contrôles portent sur DIM_DRIVER, pas sur toutes les règles du cahier.
+
+| Test de démo | Rôle | Attendu (chauffeurs / prénoms masqués / dates / années) | Obtenu sur capture | Statut | Preuve |
+|---|---|---|---|---|---|
+| D01 | RH_PAIE | 400 / 0 / 400 / 400 | 400 / 0 / 400 / 400 | VERT observé | [03a_acces_rh_paie.png](03a_acces_rh_paie.png) |
+| D02 | RESP_DEPOT_QUEENS | 161 / 0 / 0 / 0 | 161 / 0 / 0 / 0 | VERT observé | [03b_acces_queens.png](03b_acces_queens.png) |
+| D03 | ANALYSTE | 400 / 400 / 0 / 400 | 400 / 400 / 0 / 400 | VERT observé | [03c_acces_analyste.png](03c_acces_analyste.png) |
+| D04 | ACCOUNTADMIN | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 | VERT observé | [03d_acces_accountadmin.png](03d_acces_accountadmin.png) |
+
+Les captures sont des résultats agrégés sans noms, coordonnées, licences ni dates individuelles. Elles satisfont la preuve visuelle de comparaison de deux rôles, avec quatre rôles documentés. Les refus d’accès GOUVERNANCE/RAW, le rôle Bronx, les valeurs complémentaires, MART_DRIVER_MONTHLY, le catalogue métier, l’extension du mapping et la stabilité après pipeline restent à vérifier. Ne pas transformer ces tests partiels en un cahier entièrement vert.
