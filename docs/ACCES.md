@@ -216,7 +216,15 @@ Captures [22](22_chaine_retablie_seuil_50.png) et [23](23_qualite_retablie_seuil
 
 | Test d’audit | Attendu | Obtenu |
 |---|---|---|
-| AU01 | 06_audit.sql : objets/colonnes de DIM_DRIVER, rôles et comptages sur sept jours, jointure query_id | En attente d’exécution |
+| AU01 | 06_audit.sql : objets/colonnes de DIM_DRIVER, rôles et comptages sur sept jours, jointure query_id | Capture 07 : 13 groupes, quatre métiers, TRANSFORMER et ACCOUNTADMIN observés |
 | AU02 | 06b_audit_detail_prive.sql : utilisateurs et rôles consultables dans Snowflake sans publication du résultat | En attente d’exécution |
 
 La capture publique attendue provient uniquement de 06_audit.sql. Historique retardé jusqu’à trois heures ; ne pas conclure à une absence d’accès à partir d’un résultat vide. Une colonne référencée peut être masquée ou une requête ne renvoyer aucune ligne : les historiques ne prouvent pas à eux seuls une divulgation en clair. Les transformations qui lisent la dimension figurent aussi dans les résultats, avec leur type de requête.
+
+### Audit et lignage observés — 6 novembre 2026
+
+[Audit](07_audit.png) : 13 groupes rôle/type de requête sur DIM_DRIVER, avec les quatre métiers, TRANSFORMER et ACCOUNTADMIN. SELECT, SET et lectures liées aux écritures apparaissent ; aucun utilisateur ni texte de requête publié. ACCOUNTADMIN référencie la table mais les tests d’accès lui renvoient zéro ligne : l’historique d’accès ne prouve pas une divulgation. AU01 validé ; AU02 nominatif privé non attesté.
+
+[Lignage](04_lignage.png) : DIM_DRIVER et STG_RH__DRIVER_SHIFTS alimentent MART_DRIVER_MONTHLY. V_CATALOGUE est visible en aval ; cette dépendance de catalogue n’est pas une preuve de copie des valeurs RH dans la vue.
+
+A16 reste à confirmer : 02_test_mapping.sql utilise maintenant des références calculées sous TRANSFORMER, adaptées à l’état courant après purge. Comparaison du périmètre Queens seul, Queens+Bronx, puis Queens restauré ; trois lignes OK attendues, pas de changement de politique. 09_stage_vide.sql permet de conserver le contrôle LIST à zéro fichier sans recharger les sources purgées.

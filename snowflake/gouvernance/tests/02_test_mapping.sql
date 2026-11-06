@@ -1,7 +1,16 @@
--- Test A16 avant purge. Exécuter le fichier entier dans une seule feuille.
+-- Test A16 avant OU après purge. Exécuter entier dans une même feuille.
+-- CAPTURE : tableau final des trois étapes, toutes attendues OK.
+-- Références calculées avec TRANSFORMER, puis comparées aux lectures du responsable.
+-- Exécuter hors reconstruction active ; ne change que le mapping temporaire.
 -- Le tableau final rassemble les trois étapes : pas besoin de chercher les onglets.
 -- On ajoute puis retire uniquement l’entrée de test ; aucune politique modifiée.
 USE SECONDARY ROLES NONE;
+USE ROLE TRANSFORMER;
+USE WAREHOUSE NYC_TAXI_WH;
+SET map_ref_queens_drivers = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER WHERE depot='Queens');
+SET map_ref_queens_monthly = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY WHERE depot='Queens');
+SET map_ref_etendu_drivers = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER WHERE depot IN ('Queens','Bronx'));
+SET map_ref_etendu_monthly = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY WHERE depot IN ('Queens','Bronx'));
 USE ROLE GOUVERNANCE;
 USE WAREHOUSE NYC_TAXI_WH;
 EXECUTE IMMEDIATE $$
@@ -44,12 +53,12 @@ SET test_map_retour_mensuel = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_M
 
 SELECT 1 AS ordre, 'QUEENS_AVANT' AS etape,
  $test_map_avant_chauffeurs AS chauffeurs, $test_map_avant_mensuel AS lignes_mensuelles,
- 161 AS chauffeurs_attendus, 365 AS lignes_attendues,
- IFF($test_map_avant_chauffeurs=161 AND $test_map_avant_mensuel=365,'OK','ECHEC') AS statut
+ $map_ref_queens_drivers AS chauffeurs_attendus, $map_ref_queens_monthly AS lignes_attendues,
+ IFF($test_map_avant_chauffeurs=$map_ref_queens_drivers AND $test_map_avant_mensuel=$map_ref_queens_monthly,'OK','ECHEC') AS statut
 UNION ALL
 SELECT 2, 'QUEENS_PLUS_BRONX', $test_map_etendu_chauffeurs, $test_map_etendu_mensuel,
- 283, 655, IFF($test_map_etendu_chauffeurs=283 AND $test_map_etendu_mensuel=655,'OK','ECHEC')
+ $map_ref_etendu_drivers, $map_ref_etendu_monthly, IFF($test_map_etendu_chauffeurs=$map_ref_etendu_drivers AND $test_map_etendu_mensuel=$map_ref_etendu_monthly,'OK','ECHEC')
 UNION ALL
 SELECT 3, 'QUEENS_RESTAURE', $test_map_retour_chauffeurs, $test_map_retour_mensuel,
- 161, 365, IFF($test_map_retour_chauffeurs=161 AND $test_map_retour_mensuel=365,'OK','ECHEC')
+ $map_ref_queens_drivers, $map_ref_queens_monthly, IFF($test_map_retour_chauffeurs=$map_ref_queens_drivers AND $test_map_retour_mensuel=$map_ref_queens_monthly,'OK','ECHEC')
 ORDER BY ordre;

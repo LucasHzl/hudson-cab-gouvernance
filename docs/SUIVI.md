@@ -21,8 +21,8 @@ Les validations ci-dessous sont déclarées par l'étudiant, sauf mention contra
 - [x] Rôles et politiques exécutés ; démo agrégée de quatre rôles conforme et prouvée.
 - [ ] Cahier complet : Bronx, autres colonnes, mensuel, refus d’accès, catalogue, mapping et rejeu à vérifier.
 - [x] Purge dans les quatre tables et rétention un jour observées sur captures ; lecture historique avant purge prouvée.
-- [ ] Qualité et chaîne de tâches ; preuve du blocage.
-- [ ] Audit, lignage et vérification du maintien des protections.
+- [x] Qualité, chaîne de trois tâches, blocage et rétablissement prouvés (captures 13 à 23).
+- [x] Audit par rôle, lignage et 18 contrôles du maintien des protections prouvés (captures 04, 07 et 15).
 - [ ] README : exécution, décisions, écarts et limites ; vérification du contenu avant publication.
 
 ## Captures explicitement demandées par le guide
@@ -34,10 +34,10 @@ Les validations ci-dessous sont déclarées par l'étudiant, sauf mention contra
 | Abonnement réel à l'outil de veille | 01_abonnement_veille.png | Capture vérifiée : inscription CNIL enregistrée, 6 novembre 2026 |
 | Tags d'une table dans Snowsight | 02_tags_dim_driver_avant_correction.png | Reçue ; couverture incomplète de la taxonomie signalée |
 | Même requête avec deux rôles, comparaison lisible | 03a à 03d_acces_*.png | Quatre captures vérifiées : démo conforme |
-| Lignage de MART_DRIVER_MONTHLY | 04_lignage.png | À faire |
-| Graphe des tâches et exécution réussie | 05_taches_succes.png | À faire |
-| Résultats de QUALITE_RESULTATS | 06_resultats_qualite_manuels.png | Trois règles et mesures manuelles vérifiées ; mesures par tâches à vérifier |
-| Résultat de la requête d'audit | 07_audit.png | À faire |
+| Lignage de MART_DRIVER_MONTHLY | 04_lignage.png | Capture reçue et vérifiée |
+| Graphe des tâches et exécution réussie | 17_graphe_taches.png et 19_succes_graphe_complet.png | Structure et succès du graphe vérifiés |
+| Résultats de QUALITE_RESULTATS | 06_resultats_qualite_manuels.png | Mesures manuelles et par tâches vérifiées, dont blocage puis rétablissement |
+| Résultat de la requête d'audit | 07_audit.png | Capture reçue : rôles, objets et colonnes, 13 groupes |
 
 La comparaison de deux rôles peut nécessiter deux images. Elle ne remplace pas le cahier de tests de tous les rôles, dont ACCOUNTADMIN et GOUVERNANCE.
 
@@ -169,3 +169,7 @@ Captures 19 à 21 conservées : succès du graphe complet initial, puis échec q
 Captures 22 et 23 : retour à trois tâches réussies et seuil 50, test T06 validé. Exécuter snowflake/gouvernance/06_audit.sql avec ACCOUNTADMIN : capture publique des rôles, objets, colonnes et comptes de requêtes. 06b_audit_detail_prive.sql permet l’identification des comptes utilisateurs uniquement dans Snowflake ; ne pas publier sa sortie. Ces deux scripts sont préparés, non exécutés. Audit limité aux sept derniers jours, délai ACCESS_HISTORY jusqu’à trois heures ; une lecture référencée ne démontre pas que la valeur était affichée en clair. Documentation : https://docs.snowflake.com/en/sql-reference/account-usage/access_history et https://docs.snowflake.com/en/sql-reference/account-usage/query_history (consultées le 6 novembre 2026).
 
 Capture restante : sous TRANSFORMER, Catalog → Explorer → NYC_TAXI → MARTS → MART_DRIVER_MONTHLY → Lineage. Déplier les sources amont pour présenter le chemin RAW → STAGING → MARTS ; graphe automatique à observer avant de le déclarer validé. Documentation : https://docs.snowflake.com/en/user-guide/ui-snowsight-lineage.
+
+## Derniers points ouverts
+
+Audit et lignage observés. Toutes les catégories de captures demandées ont une preuve conservée. Restent : tableau complet A16 (mapping avant/extension/restauration, désormais adapté après purge), contrôle stage vide par 09_stage_vide.sql, rejeu immédiat du chargement non formellement prouvé, vérification privée des comptes de lecteurs si demandée, relecture finale et push par Lucas. Couverture intégrale des tags impossible avec la taxonomie inchangée : écart explicite, C20 non intégralement validé. Après la démonstration, suspendre la racine avec rh/suspendre_taches_rh.sql. Les paragraphes chronologiques précédents retracent les états successifs ; les derniers résultats font foi.

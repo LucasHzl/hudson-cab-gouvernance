@@ -118,7 +118,7 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 
 | Question | Réponse | Preuve |
 |---|---|---|
-| Peut-on dire qui a lu ces données la semaine dernière ? | Audit préparé sur sept jours ; résultat encore à vérifier, latence possible de trois heures. | 06_audit.sql (rôles, capture publique), 06b_audit_detail_prive.sql (comptes, consultation privée) |
+| Peut-on dire qui a lu ces données la semaine dernière ? | Audit exécuté sur sept jours : quatre métiers, TRANSFORMER et ACCOUNTADMIN référencent DIM_DRIVER ; résultat sans preuve de valeurs visibles en clair. Identification des comptes possible via le complément privé, non attestée. | Capture 07_audit.png ; 06_audit.sql et 06b_audit_detail_prive.sql ; délai possible de trois heures |
 | Sait-on quand une donnée est fausse ? | Trois règles exécutées : 4 licences et 7 emails en ALERTE, 25 services orphelins sous le seuil bloquant 50 ; elles ne garantissent pas toute l’exactitude. | rh/qualite_rh.sql et futurs résultats QUALITE_RESULTATS |
 | Que se passe-t-il si le rôle des outils est compromis ? | TRANSFORMER dispose des données en clair et possède les tables : compromission critique, les règles actuelles ne suffisent pas contre leur propriétaire malveillant. Suspendre les tâches, retirer les habilitations du compte compromis, renouveler ses accès et examiner les journaux. | Privilèges d’installation, mapping TRANSFORMER et politiques ; réponse à incident proposée, non exercée |
 
@@ -171,3 +171,7 @@ Captures 19 à 21 conservées : succès du graphe complet initial, puis échec q
 Captures 22 et 23 : retour à trois tâches réussies et seuil 50, test T06 validé. Exécuter snowflake/gouvernance/06_audit.sql avec ACCOUNTADMIN : capture publique des rôles, objets, colonnes et comptes de requêtes. 06b_audit_detail_prive.sql permet l’identification des comptes utilisateurs uniquement dans Snowflake ; ne pas publier sa sortie. Ces deux scripts sont préparés, non exécutés. Audit limité aux sept derniers jours, délai ACCESS_HISTORY jusqu’à trois heures ; une lecture référencée ne démontre pas que la valeur était affichée en clair. Documentation : https://docs.snowflake.com/en/sql-reference/account-usage/access_history et https://docs.snowflake.com/en/sql-reference/account-usage/query_history (consultées le 6 novembre 2026).
 
 Capture restante : sous TRANSFORMER, Catalog → Explorer → NYC_TAXI → MARTS → MART_DRIVER_MONTHLY → Lineage. Déplier les sources amont pour présenter le chemin RAW → STAGING → MARTS ; graphe automatique à observer avant de le déclarer validé. Documentation : https://docs.snowflake.com/en/user-guide/ui-snowsight-lineage.
+
+### Preuves d’audit et de lignage reçues
+
+Capture 07 : audit exécuté, rôles et colonnes référencées sur DIM_DRIVER. Capture 04 : lignage automatique du mensuel depuis les services STAGING et DIM_DRIVER. Les descriptions et tags de table sont visibles, notamment sensibilité confidentielle et conservation après fin du contrat. Les écarts de justification juridique des durées et de couverture des tags restent signalés ; ces captures ne valent pas conformité générale.

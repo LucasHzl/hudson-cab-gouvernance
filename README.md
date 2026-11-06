@@ -4,7 +4,9 @@ Projet pédagogique : catalogue, accès, conservation, qualité et audit des don
 
 ## État du projet
 
-En cours au 6 novembre 2026. Compte Enterprise d’essai sur AWS Paris et installation réussie déclarés par l’étudiant ; volumes STAGING/MARTS vérifiés sur capture fournie par l’étudiant, sans connexion directe de l’assistant à Snowflake. Voir `docs/SUIVI.md` pour les validations et preuves restantes.
+Implémentation principale exécutée au 6 novembre 2026 : catalogue, accès, purge, qualité, tâches, audit et lignage. Captures conservées dans `docs/` ; 18 contrôles après tâches verts et blocage qualité prouvé, puis seuil normal rétabli. Compte Enterprise AWS Paris ; exécutions réalisées par Lucas, sans connexion directe de l’assistant à Snowflake.
+
+À confirmer avant clôture : tableau complet du test de mapping, preuve finale du stage vide et rejeu immédiat du chargement. Limite persistante : toutes les données personnelles sont inventoriées, mais les valeurs de tags imposées ne couvrent pas toutes leurs catégories ; l’écart est documenté, C20 n’est pas intégralement validé. Voir `docs/SUIVI.md`.
 
 ## Gouvernance
 
@@ -17,7 +19,7 @@ Les deux CSV RH restent locaux et sont exclus par `.gitignore`, même s’ils so
 - `TRANSFORMER` porte le chargement et le pipeline, avec les droits nécessaires à ses opérations.
 - Dans le scénario, Hudson Cab Europe décide du traitement. Le droit applicable et les sources figurent dans `docs/VEILLE.md`, section 1.
 - Les fichiers SQL sont conservés dans le dépôt et exécutés dans Snowsight. Toute modification durable doit se retrouver dans un script rejouable.
-- Les 18 colonnes sources et leurs dérivations ont été inventoriées dans `docs/REGISTRE.md` ; protections et durées restent à mettre en œuvre. Aucun accès métier n’est encore déclaré ouvert.
+- Les 18 colonnes sources et leurs dérivations sont inventoriées dans `docs/REGISTRE.md`. Accès, masquage, filtrage, purge et conservation sont implémentés ; les écarts et limites figurent ci-dessous.
 
 ### Ordre d’exécution
 
@@ -36,7 +38,10 @@ Les deux CSV RH restent locaux et sont exclus par `.gitignore`, même s’ils so
 13. `snowflake/rh/qualite_rh.sql`, avec TRANSFORMER : trois règles, journalisation durable puis blocage si service_rattache dépasse 50. Trois mesures vérifiées sur capture : 7 emails, 4 licences, 25 services orphelins, statuts attendus. Les requêtes scalaires sont documentées dans `rh/controles/`.
 14. `snowflake/rh/taches_rh.sql`, avec TRANSFORMER : crée/modifie la chaîne suspendue. Puis `lancer_taches_rh.sql` pour l’activer et demander un lancement ; `suivi_taches_rh.sql` pour lire le résultat du même lancement. Première exécution complète réussie le 6 novembre 2026, captures 13 et 14 : propriétaire TRANSFORMER, trois SUCCEEDED dans le même groupe. Départ automatique à 05:00 non encore observé.
 15. `snowflake/gouvernance/tests/06_verifier_apres_taches.sql` contrôle les protections, descriptions, rétention, valeurs et accès ; `consulter_qualite.sql` lit les dernières mesures sans en créer.
-16. Restent le test bloquant, l’audit, le lignage et la finalisation documentaire. `suspendre_taches_rh.sql` arrête les départs automatiques à la fin du brief. Ce README ne permet pas encore de rejouer l’intégralité du projet.
+16. Démontrer le blocage avec `snowflake/gouvernance/tests/07_preparer_blocage.sql`, puis `rh/lancer_taches_rh.sql`, `rh/suivi_taches_rh.sql` et `rh/consulter_qualite.sql`. Capturer avant restauration ; rétablir le seuil avec `tests/08_retablir_seuil.sql`, relancer et vérifier. Blocage et retour à 50 prouvés sur captures 20 à 23.
+17. `snowflake/gouvernance/06_audit.sql`, avec ACCOUNTADMIN : audit public par rôle exécuté, capture 07. `06b_audit_detail_prive.sql` fournit les comptes, à consulter uniquement en privé. Fenêtre de sept jours, délai possible de trois heures.
+18. Sous TRANSFORMER, ouvrir MART_DRIVER_MONTHLY → Lineage : capture 04 conservée. Tester le mapping avec `tests/02_test_mapping.sql` (références dynamiques avant/après purge) et le stage vide avec `tests/09_stage_vide.sql` ; ces deux preuves finales restent attendues.
+19. Après la démonstration, `snowflake/rh/suspendre_taches_rh.sql` arrête les prochains départs automatiques. Aucun push réalisé par l’assistant.
 
 ### Comprendre le chargement
 
@@ -152,3 +157,7 @@ Captures 19 à 21 conservées : succès du graphe complet initial, puis échec q
 Captures 22 et 23 : retour à trois tâches réussies et seuil 50, test T06 validé. Exécuter snowflake/gouvernance/06_audit.sql avec ACCOUNTADMIN : capture publique des rôles, objets, colonnes et comptes de requêtes. 06b_audit_detail_prive.sql permet l’identification des comptes utilisateurs uniquement dans Snowflake ; ne pas publier sa sortie. Ces deux scripts sont préparés, non exécutés. Audit limité aux sept derniers jours, délai ACCESS_HISTORY jusqu’à trois heures ; une lecture référencée ne démontre pas que la valeur était affichée en clair. Documentation : https://docs.snowflake.com/en/sql-reference/account-usage/access_history et https://docs.snowflake.com/en/sql-reference/account-usage/query_history (consultées le 6 novembre 2026).
 
 Capture restante : sous TRANSFORMER, Catalog → Explorer → NYC_TAXI → MARTS → MART_DRIVER_MONTHLY → Lineage. Déplier les sources amont pour présenter le chemin RAW → STAGING → MARTS ; graphe automatique à observer avant de le déclarer validé. Documentation : https://docs.snowflake.com/en/user-guide/ui-snowsight-lineage.
+
+### Audit et lignage validés
+
+Capture docs/07_audit.png : jointure ACCESS_HISTORY / QUERY_HISTORY exécutée, quatre métiers et deux rôles techniques référencent DIM_DRIVER. Référence ne signifie pas valeur visible en clair ; ACCOUNTADMIN reste filtré à zéro ligne dans les tests. Capture docs/04_lignage.png : sources DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS vers MART_DRIVER_MONTHLY, dépendance V_CATALOGUE en aval. Les notes datées précédentes décrivent les étapes historiques ; les états actuels sont résumés en tête du README et du suivi.
