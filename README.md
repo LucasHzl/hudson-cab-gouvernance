@@ -142,3 +142,7 @@ Captures docs/15_controles_apres_taches.png et docs/16_qualite_par_tache.png : 1
 ### Preuves du graphe et préparation du blocage
 
 Captures 17_graphe_taches.png et 18_historique_t_purge.png rangées : structure du graphe et succès de la racine ; capture 14 pour les trois succès. Test de seuil temporaire à 0 dans snowflake/gouvernance/tests/07_preparer_blocage.sql, restauration à 50 dans 08_retablir_seuil.sql. Chaque modification se fait hors exécution active, racine suspendue ; le lancement et le suivi utilisent les scripts rh dédiés. Capturer l’échec attendu et ses mesures avant restauration, puis la chaîne normale réussie. Test de blocage non encore attesté ; audit et lignage restent à réaliser.
+
+### Blocage qualité prouvé — 6 novembre 2026
+
+Captures 19 à 21 conservées : succès du graphe complet initial, puis échec qualité au seuil temporaire 0, reconstruction non démarrée et mesures conservées (25 services orphelins / 0 / ALERTE). T05 validé par les résultats observés. Le rétablissement du seuil normal à 50 et la nouvelle chaîne réussie restent à confirmer avec tests/08_retablir_seuil.sql puis les scripts rh de lancement, suivi et consultation qualité. Audit et lignage restent à réaliser.
