@@ -20,13 +20,13 @@ Les résultats ci-dessous sont ceux observés le 6 novembre 2026 après purge. R
 | 1 min | Capture 15, 18 contrôles après reconstruction | Les INSERT OVERWRITE remplacent les contenus sans recréer les objets protégés |
 | 1 min | Captures 11/12 et règle de purge | 400 → 354, copies expirées supprimées ; Time Travel un jour et Fail-safe distinct |
 | 1 min | Audit 06_audit.sql | Qui référence les colonnes, avec quel rôle ; distinguer référence et visibilité en clair |
-| 1 min | Lineage de MART_DRIVER_MONTHLY et limites | Services STAGING + dimension ; expliquer la limite des tags et la justification juridique à obtenir |
+| 1 min | Lineage de MART_DRIVER_MONTHLY et limites | Services STAGING + dimension ; expliquer l’extension de catégories D01 et la justification juridique des durées |
 
 Le rejeu du test de mapping est réversible. Les tests de blocage changent temporairement le seuil : privilégier leurs preuves conservées si le temps manque ; si relancés, rétablir 50 avec tests/08_retablir_seuil.sql avant de finir. Après la dernière démonstration, suspendre la racine des tâches avec rh/suspendre_taches_rh.sql.
 
 ## Questions de compréhension
 
-- Pourquoi un tag ne protège-t-il pas à lui seul ? Il décrit ; une politique ou un droit doit exploiter cette information.
+- Pourquoi un tag ne protège-t-il pas à lui seul ? Il décrit ; une politique ou un droit doit exploiter cette information. DEPOT doit être classé sans masque automatique puisqu’il est la clé du filtre de lignes.
 - Pourquoi tester TRANSFORMER ? Un masque appliqué au pipeline pourrait écrire des valeurs masquées dans les tables métier.
 - Pourquoi supprimer aussi RAW ? Une reconstruction pourrait sinon réintroduire les personnes purgées de MARTS.
 - Pourquoi voir ACCOUNTADMIN dans l’audit n’est-il pas une fuite prouvée ? Le journal décrit une référence à l’objet ; les tests vérifient les lignes et valeurs obtenues.

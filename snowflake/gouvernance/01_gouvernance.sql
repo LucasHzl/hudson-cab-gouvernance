@@ -36,9 +36,10 @@ CREATE TAG IF NOT EXISTS NYC_TAXI.GOUVERNANCE.SENSIBILITE
   ALLOWED_VALUES 'public', 'interne', 'confidentiel'
   COMMENT = 'Niveau de sensibilité de la table';
 CREATE TAG IF NOT EXISTS NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE
-  ALLOWED_VALUES 'nom', 'email', 'telephone', 'date_naissance',
-                 'identifiant_officiel', 'identifiant_interne'
-  COMMENT = 'Nature de donnée personnelle : valeurs imposées par le contrat ; couverture à voir dans VEILLE.md';
+  ALLOWED_VALUES 'nom', 'email', 'telephone', 'date_naissance', 'identifiant_officiel', 'identifiant_interne', 'donnee_professionnelle', 'activite'
+  COMMENT = 'Nature personnelle : six catégories initiales et extension professionnelle/activité documentée dans DECISIONS.md';
+-- Réappliquer l’extension sur une installation existante.
+ALTER TAG NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE SET ALLOWED_VALUES 'nom', 'email', 'telephone', 'date_naissance', 'identifiant_officiel', 'identifiant_interne', 'donnee_professionnelle', 'activite';
 CREATE TAG IF NOT EXISTS NYC_TAXI.GOUVERNANCE.DUREE_CONSERVATION
   COMMENT = 'Durée et événement de départ du délai ; le tag décrit, la purge exécute';
 

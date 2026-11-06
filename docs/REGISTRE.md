@@ -12,7 +12,7 @@ Les 18 colonnes des deux fichiers sont personnelles dans leur contexte, car chaq
 
 ### `drivers.csv`
 
-| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE / écart | Besoin métier / utilisation |
+| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE après migration | Besoin métier / utilisation |
 |---|---|---|---|
 | `driver_id` | Identifiant indirect, relié à la fiche RH et aux services. | identifiant_interne | Tous les rôles métier : jointures et comptages. |
 | `first_name` | Identité ; prénom directement nominatif, parfois insuffisant seul. | nom | Paie ; responsable du dépôt concerné pour organiser le travail. Masqué pour ANALYSTE. |
@@ -21,22 +21,22 @@ Les 18 colonnes des deux fichiers sont personnelles dans leur contexte, car chaq
 | `phone` | Coordonnée permettant de contacter le chauffeur. | telephone | Paie ; responsable du dépôt concerné. Masqué pour ANALYSTE. |
 | `birth_date` | Attribut personnel pouvant contribuer à une identification indirecte. | date_naissance | Paie : date complète ; ANALYSTE : année seulement ; responsables : masquée. |
 | `tlc_license_number` | Identifiant officiel du chauffeur ; son caractère éventuellement public ne change pas sa nature personnelle. | identifiant_officiel | Paie selon le contrat. Masqué pour responsables et ANALYSTE. |
-| `depot` | Affectation professionnelle du chauffeur, identifiable par driver_id. | Écart : aucune valeur adaptée | Tous les métiers dans leur périmètre ; clé de filtrage des responsables. |
-| `hire_date` | Date du parcours professionnel d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Gestion du personnel ; calcul d’ancienneté. Paie en clair ; responsables et analyste masqués, selon la matrice. |
-| `end_date` | Date du parcours professionnel et indication de départ. | Écart : aucune valeur adaptée | Gestion du personnel ; déclenchement de la purge ; distinction actifs et anciens. Paie en clair ; responsables et analyste masqués. |
+| `depot` | Affectation professionnelle du chauffeur, identifiable par driver_id. | donnee_professionnelle (extension D01) | Tous les métiers dans leur périmètre ; clé de filtrage des responsables. |
+| `hire_date` | Date du parcours professionnel d’un chauffeur identifiable. | donnee_professionnelle (extension D01) | Gestion du personnel ; calcul d’ancienneté. Paie en clair ; responsables et analyste masqués, selon la matrice. |
+| `end_date` | Date du parcours professionnel et indication de départ. | donnee_professionnelle (extension D01) | Gestion du personnel ; déclenchement de la purge ; distinction actifs et anciens. Paie en clair ; responsables et analyste masqués. |
 
 ### `driver_shifts.csv`
 
-| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE / écart | Besoin métier / utilisation |
+| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE après migration | Besoin métier / utilisation |
 |---|---|---|---|
 | `shift_id` | Identifiant du service relié à un chauffeur par driver_id. | identifiant_interne | Pipeline : dédoublonnage et traçabilité. Pas exposé dans le mart mensuel fourni. |
 | `driver_id` | Identifiant indirect reliant activité et personne. | identifiant_interne | Tous les rôles métier : jointures et activité par chauffeur. |
-| `shift_date` | Date d’activité d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Pipeline : regroupement par mois ; analyses temporelles. |
-| `depot` | Lieu d’affectation ou d’activité d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Analyse par garage et filtrage des responsables. |
-| `start_hour` | Horaire de travail d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Organisation des services ; besoin de conservation à justifier. Pas exposé dans le mart fourni. |
-| `hours_worked` | Mesure du travail d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Paie, pilotage des dépôts, analyse d’activité ; agrégée par chauffeur et mois. |
-| `trips_count` | Mesure de l’activité d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Pilotage et analyse ; agrégée par chauffeur et mois. |
-| `revenue_usd` | Mesure économique de l’activité d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Pilotage et analyse ; agrégée par chauffeur et mois. |
+| `shift_date` | Date d’activité d’un chauffeur identifiable. | activite (extension D01) | Pipeline : regroupement par mois ; analyses temporelles. |
+| `depot` | Lieu d’affectation ou d’activité d’un chauffeur identifiable. | donnee_professionnelle (extension D01) | Analyse par garage et filtrage des responsables. |
+| `start_hour` | Horaire de travail d’un chauffeur identifiable. | activite (extension D01) | Organisation des services ; besoin de conservation à justifier. Pas exposé dans le mart fourni. |
+| `hours_worked` | Mesure du travail d’un chauffeur identifiable. | activite (extension D01) | Paie, pilotage des dépôts, analyse d’activité ; agrégée par chauffeur et mois. |
+| `trips_count` | Mesure de l’activité d’un chauffeur identifiable. | activite (extension D01) | Pilotage et analyse ; agrégée par chauffeur et mois. |
+| `revenue_usd` | Mesure économique de l’activité d’un chauffeur identifiable. | activite (extension D01) | Pilotage et analyse ; agrégée par chauffeur et mois. |
 
 ### Où les données sont-elles copiées ?
 
@@ -60,11 +60,11 @@ MARTS.DIM_DEPOT est un référentiel de garages sans lien vers un chauffeur dans
 
 Les colonnes techniques _source_file et _loaded_at sont ajoutées par le chargement, puis renommées source_file et loaded_at dans STAGING, sans copie dans MARTS. Leur contenu attendu décrit l’ingestion et ne désigne pas un chauffeur à lui seul ; il reste attaché à des lignes personnelles et soumis aux contrôles d’accès. Ne pas inclure de noms de personnes dans les noms de fichiers.
 
-### Couverture des tags et limites du contrat
+### Classification complète et extension du contrat
 
-Les valeurs permises de DONNEE_PERSONNELLE décrivent l’identité et les identifiants, mais pas explicitement les dates professionnelles, l’affectation ni les mesures d’activité. Le même écart concerne les attributs calculés is_active, tenure_years, activity_month, nb_shifts et les agrégats par chauffeur. driver_name relève de nom.
+Les six catégories d’origine couvrent identité, coordonnées et identifiants. La décision D01 ajoute donnee_professionnelle et activite pour les vingt attributs restants, y compris les calculs is_active, tenure_years, activity_month et les mesures mensuelles. driver_name relève toujours de nom et birth_year de date_naissance. L’objectif est de classer les 39 colonnes personnelles des quatre tables ; les quatre colonnes de DIM_DEPOT et les quatre métadonnées d’ingestion ne sont pas personnelles dans ce contenu.
 
-La qualification juridique et le tag technique sont distincts : une colonne n’est pas non personnelle parce qu’aucune étiquette prévue ne lui correspond. Décision après relecture du 6 novembre 2026 : conserver les valeurs imposées et signaler la couverture impossible sans étiquette trompeuse. Aucun élargissement de taxonomie retenu. L’écart reste explicite dans VEILLE.md, le README et V_CATALOGUE ; masques directs et filtre de lignes protègent ces colonnes malgré cette limite de classement.
+L’extension est explicite, documentée dans DECISIONS.md ; le contrat initial reste disponible sans réécriture. Le tag classe, les politiques directes protègent et la RAP filtre. DEPOT est tagué mais ne reçoit pas de masque. Migration préparée : résultat de couverture et non-régression à consigner après les tests 12 et 10.
 
 ### Ce qui a surpris
 
@@ -125,7 +125,7 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 
 ### Limites connues
 
-La taxonomie imposée ne couvre pas toutes les catégories personnelles : inventaire et protections en place, écart C20 explicite. La durée uniforme de cinq ans nécessite une justification par finalité et une décision sur l’archivage. Time Travel et Fail-safe empêchent d’assimiler la purge à un effacement physique immédiat ; copies externes hors périmètre. Les rôles administratifs et le propriétaire des tables peuvent reconfigurer le système : les tests ne constituent pas une protection contre un administrateur malveillant.
+La taxonomie initiale a motivé une extension de deux catégories documentée dans DECISIONS.md ; sa couverture complète attend encore la preuve de migration. La durée uniforme de cinq ans nécessite une justification par finalité et une décision sur l’archivage. Time Travel et Fail-safe empêchent d’assimiler la purge à un effacement physique immédiat ; copies externes hors périmètre. Les rôles administratifs et le propriétaire des tables peuvent reconfigurer le système : les tests ne constituent pas une protection contre un administrateur malveillant.
 
 
 ## Preuves de mise en œuvre
@@ -143,7 +143,7 @@ La taxonomie imposée ne couvre pas toutes les catégories personnelles : invent
 | Lignage | DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS alimentent le mensuel | Capture 04 |
 | Stage | Zéro fichier | Capture 25 |
 
-Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu des politiques validé par la capture 26, avec 18 contrôles OK. Deux recettes finales couvrent le rejeu du chargement et les accès complémentaires ; leurs résultats restent à consigner dans ACCES.md.
+Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu des politiques initiales validé par la capture 26 ; 69 contrôles d’accès et six contrôles de rejeu validés par les captures 27/28. La nouvelle classification et les masques directs restent à vérifier après migration avec les tests 12 et 10.
 
 ### Destinataires, transferts et droits
 

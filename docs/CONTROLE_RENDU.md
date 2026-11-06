@@ -15,7 +15,7 @@ Contrôle du 6 novembre 2026, contre BRIEF.md, CONTRAT_GOUVERNANCE.md, GUIDE_BRI
 | C19.3 | Tags, politiques et descriptions survivent aux tâches | [x] 18 contrôles après tâches, capture 15 ; après rejeu, capture 26 |
 | C19.4 | README rejouable ; aucun secret ni donnée personnelle dans Git | [x] Ordre complet, exclusions contrôlées et deux rejeux avec contenus RAW inchangés, capture 28 |
 | C20.1 | Chaque table décrite avec source/rythme, colonnes DIM_DRIVER/RAW.DRIVERS décrites | [x] Cinq fiches, 47 colonnes commentées ; zéro commentaire absent dans les contrôles après tâches |
-| C20.2 | Toutes les colonnes personnelles taguées ; sensibilité/durée par table | [ ] Tags de table posés ; vingt attributs personnels sans catégorie fidèle aux six valeurs imposées. Écart du contrat consigné ; C20 non intégralement validé |
+| C20.2 | Toutes les colonnes personnelles taguées ; sensibilité/durée par table | [ ] Extension D01 préparée, 39 colonnes visées ; test 12 et non-régression 10 à exécuter. Extension explicite de la taxonomie initiale |
 | C20.3 | Vue catalogue descriptions/tags lisible par métier | [x] V_CATALOGUE, 25 lignes accessibles à ANALYSTE, capture 26 |
 | C20.4 | Qualité documentée et lignage présenté | [x] Trois règles, seuils/gravités dans README ; lignage capture 04 |
 | C21.1 | Matrice de tous les rôles, administrateur et gouvernance inclus | [x] Capture 27 : 69 contrôles, huit rôles, 22 refus attendus et matrice des deux tables métier, zéro échec ; à recontrôler après extension des tags |
@@ -35,13 +35,14 @@ Contrôle du 6 novembre 2026, contre BRIEF.md, CONTRAT_GOUVERNANCE.md, GUIDE_BRI
 - [x] Questions du guide et de conception répondues dans QUESTIONS.md ; soutenance structurée dans SOUTENANCE.md.
 - [x] Recettes finales 10 et 11 : captures 27/28, 69 et six contrôles OK.
 - [x] Suspension finale de la racine consignée, sans capture dédiée.
+- [ ] Migration D01 : couverture 39 colonnes et non-régression des 69 contrôles à prouver.
 - [ ] Derniers commits et état public de GitHub à constater après publication.
 
 ## Réserves assumées
 
-L’écart de tags n’est pas un bonus manquant : c’est une incompatibilité signalée entre l’inventaire personnel large et la taxonomie imposée. La solution ne crée pas de catégories ni de libellés trompeurs sans décision. Les cinq ans, l’absence d’archive distincte, les copies externes et les pouvoirs administratifs sont expliqués, pas présentés comme une conformité juridique générale.
+La classification complète n’est pas un bonus : la décision D01 ajoute deux catégories explicites pour couvrir les vingt attributs absents de la taxonomie initiale. Le contrat de référence reste inchangé ; l’extension est tracée comme un choix de conception, sans validation externe inventée. La preuve de migration reste attendue. Les cinq ans, l’absence d’archive distincte, les copies externes et les pouvoirs administratifs sont expliqués, pas présentés comme une conformité juridique générale.
 
-Les tests en attente sont identifiés par leur résultat manquant. Les scripts et le présent contrôle ne doivent pas être présentés comme la preuve de leur exécution.
+Les tests 10/11 sont désormais prouvés par les captures 27/28 ; seuls les résultats post-migration 12/10 restent attendus. Les tests en attente sont identifiés par leur résultat manquant. Les scripts et le présent contrôle ne doivent pas être présentés comme la preuve de leur exécution.
 
 ## Résultat des deux passes locales
 

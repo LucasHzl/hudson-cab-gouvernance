@@ -1,6 +1,5 @@
 -- Fiche rejouable : descriptions et tags ; aucune recréation de table.
--- Les attributs professionnels sans valeur de tag adaptée restent inventoriés.
--- Couverture incomplète du tag DONNEE_PERSONNELLE : voir docs/VEILLE.md et README.
+-- Référentiel sans donnée personnelle : sensibilité et conservation documentées.
 USE SECONDARY ROLES NONE;
 USE ROLE TRANSFORMER;
 USE WAREHOUSE NYC_TAXI_WH;

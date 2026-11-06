@@ -110,7 +110,7 @@ Source technique : [Snowflake, Understanding and viewing Fail-safe](https://docs
 - Durées applicables aux contrats et obligations new-yorkais ; calendrier par catégorie et éventuels gels pour contentieux. Ne pas appliquer automatiquement les cinq ans du registre unique du personnel français à tous les fichiers américains.
 - Rôle réel de Hudson Cab Partners et contrats de sous-traitance, prestataires ultérieurs et accès depuis des pays tiers. La région Paris ne prouve pas à elle seule l’absence de transfert international.
 - Organisation de l’archive intermédiaire, habilitations et modalités d’exercice des droits.
-- Arbitrage de la couverture des tags sans modifier silencieusement les exigences du projet.
+- Extension de classification explicite D01 ; arbitrages juridiques distincts du choix technique, sans validation juridique fictive.
 
 ## 6. Journal et preuves de veille
 
@@ -119,16 +119,14 @@ Source technique : [Snowflake, Understanding and viewing Fail-safe](https://docs
 | 5 novembre 2026 | RGPD, articles 3 et 4 | Établissement décideur en France ; données de chauffeurs américains | Documenter Hudson Cab Europe responsable du traitement |
 | 5 novembre 2026 | Référentiel RH CNIL, publié le 2 avril 2026 | Durées par activité, périmètre du droit du travail français | Ne pas transposer automatiquement aux contrats new-yorkais ; demander une justification par finalité |
 | 6 novembre 2026 | Inscription à la lettre CNIL | Notification automatique des actualités | Abonnement enregistré, capture 01 |
-| 6 novembre 2026 | Contrat et inventaire | Valeurs de tags insuffisantes | Écart C20 consigné, pas d’étiquette trompeuse ni extension silencieuse |
+| 6 novembre 2026 | Contrat et inventaire | Valeurs de tags insuffisantes | Écart identifié ; extension explicite D01 retenue, deux catégories et test de couverture |
 
 Les propositions juridiques et décisions de conservation au-delà de l’exercice ne sont pas approuvées par un conseil dans le scénario. L’abonnement en place ne vaut pas souscription automatique aux autres organismes.
 
 ## Décision sur l’écart de taxonomie — 6 novembre 2026
 
-Le contrat (introduction et section 3) fixe les valeurs ; le guide (étape 0 et jour 1, étape 6) demande de signaler les écarts sans réécrire le contrat. Le brief C20 exige parallèlement un tag sur toute colonne personnelle de l’inventaire. Notre inventaire large inclut des attributs professionnels et d’activité qui ne correspondent à aucune des six valeurs de nature prévues. Ces exigences ne peuvent pas être satisfaites simultanément pour ces attributs tout en conservant le sens exact des étiquettes.
+Les six catégories initiales du contrat ne permettent pas de décrire fidèlement les vingt attributs professionnels et d’activité pourtant personnels. La classification complète exigée par C20 motive une extension explicite : donnee_professionnelle et activite. Les trois tags et les catégories initiales sont conservés ; les nouvelles valeurs ne changent pas la qualification juridique des données ni la matrice métier.
 
-Décision : conserver les trois tags et les six valeurs, maintenir toutes les colonnes personnelles dans l’inventaire et les descriptions, appliquer les catégories adaptées et signaler les autres comme ECART_TAG_CONTRAT. Ne pas déclarer ces colonnes non personnelles pour faire passer le contrôle ; ne pas appeler une date de contrat date_naissance ni une recette identifiant_interne. Le critère de couverture C20 reste partiellement non satisfait, explicitement expliqué. Seul le formateur peut confirmer l’acceptation pédagogique de ce constat.
+Cette décision diffère de la liste de valeurs initiale de la section 3 ; elle est justifiée dans DECISIONS.md et présentée comme une décision de conception du projet, sans prétendre à une validation du formateur ou du conseil juridique. Le contrat de référence reste inchangé. Le RGPD impose une protection et une documentation adaptées, pas ces noms précis de catégories Snowflake.
 
-Les catégories sans étiquette adaptée restent protégées : masques par colonne, filtrage par dépôt, purge et audit. Les tests et captures sont référencés dans ACCES.md. La taxonomie imposée n’a pas été étendue.
-
-Preuve : l’export `09_catalogue_avant_correction.csv` contient 24 lignes décrites dans MARTS, dont 11 colonnes personnelles sans valeur adaptée ; 20 affectations manquent sur le périmètre RAW/MARTS d’après les schémas et scripts du catalogue. Ce manque est une incompatibilité interne des exigences, distincte d’une violation juridique automatiquement établie. Le RGPD impose une gouvernance et une protection adaptées ; il n’impose pas ces trois noms de tags Snowflake.
+L’export initial 09 et la capture 02 restent des preuves historiques de la couverture partielle. La migration vise 39 colonnes personnelles taguées sur RAW/MARTS et zéro écart dans V_CATALOGUE. Les masques directs permettent de taguer DEPOT sans lui appliquer un masque incompatible avec sa fonction de clé de filtrage. Les tests 12 puis 10 doivent encore prouver la couverture et la stabilité des accès après cette évolution.

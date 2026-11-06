@@ -113,7 +113,7 @@ SELECT COUNT(*) AS colonnes, COUNT(DISTINCT table_name) AS tables,
        COUNT_IF(description IS NULL) AS descriptions_absentes,
        COUNT_IF(couverture_tag <> 'OK') AS ecarts_taxonomie_signales
 FROM NYC_TAXI.GOUVERNANCE.V_CATALOGUE;
--- Attendu : 25, 3, 0, 11. Les 11 écarts ne sont pas cachés.
+-- Attendu après extension : zéro écart de classification dans V_CATALOGUE.
 
 -- ACCOUNTADMIN hérite de TRANSFORMER par SYSADMIN : SELECT autorisé,
 -- mais la future politique doit ne lui laisser aucune ligne RH.

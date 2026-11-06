@@ -54,6 +54,8 @@ ACCESS_HISTORY enregistre les objets et colonnes référencés ; QUERY_HISTORY a
 
 Les INSERT OVERWRITE modifient les contenus sans recréer les tables, ce qui conserve tags, descriptions et politiques. Les scripts créent conditionnellement puis modifient les politiques en place. Les captures 15 et 26 donnent 18 contrôles OK après pipeline puis rejeu des règles. La création/modification des tâches est distincte de leur activation ; une modification du graphe impose d’abord de suspendre la racine.
 
-## Pourquoi toutes les colonnes personnelles ne sont-elles pas taguées ?
+## Comment couvrir toutes les colonnes personnelles sans catégorie trompeuse ?
 
-Le contrat impose six catégories d’identité/coordonnées/identifiants mais le brief exige un tag pour toutes les données personnelles, dont affectation et mesures d’activité. Ces attributs ne correspondent pas aux six valeurs. L’inventaire reste complet, les descriptions les identifient, la vue signale ECART_TAG_CONTRAT et les politiques directes les protègent. La couverture complète C20 reste non satisfaite : il faut une décision sur la taxonomie pour lever cet écart. Aucun résultat de protection ne transforme cet écart en conformité de catalogue.
+Les six catégories initiales ne décrivent ni une affectation, ni une date de contrat, ni une mesure d’activité. La décision D01 ajoute explicitement donnee_professionnelle et activite. Les trois tags et les six catégories initiales sont conservés ; les vingt affectations manquantes sont ajoutées pour atteindre 39 colonnes personnelles. Cette extension est justifiée et tracée comme une évolution de la taxonomie du contrat, pas comme une conformité littérale à sa liste initiale. Les tests 12 et 10 restent à exécuter après migration.
+
+DEPOT est personnel dans la fiche chauffeur et sert aussi au filtre de lignes. Le tag doit donc le classer sans déclencher un masque automatique. Les masques sont attachés directement aux autres colonnes, et la politique textuelle consulte leur catégorie. Un tag décrit, une politique transforme une valeur, une politique de lignes détermine le périmètre : ces fonctions sont distinctes.

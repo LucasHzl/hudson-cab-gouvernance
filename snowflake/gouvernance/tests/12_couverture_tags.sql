@@ -46,12 +46,20 @@ WITH attendues AS (
 ('MARTS','MART_DRIVER_MONTHLY','HOURS_WORKED','activite'),
 ('MARTS','MART_DRIVER_MONTHLY','TRIPS_COUNT','activite'),
 ('MARTS','MART_DRIVER_MONTHLY','REVENUE_USD','activite')
+), tags AS (
+SELECT object_schema,object_name,column_name,tag_value FROM TABLE(NYC_TAXI.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('NYC_TAXI.RAW.DRIVERS','TABLE')) WHERE tag_database='NYC_TAXI' AND tag_schema='GOUVERNANCE' AND tag_name='DONNEE_PERSONNELLE'
+UNION ALL
+SELECT object_schema,object_name,column_name,tag_value FROM TABLE(NYC_TAXI.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('NYC_TAXI.RAW.DRIVER_SHIFTS','TABLE')) WHERE tag_database='NYC_TAXI' AND tag_schema='GOUVERNANCE' AND tag_name='DONNEE_PERSONNELLE'
+UNION ALL
+SELECT object_schema,object_name,column_name,tag_value FROM TABLE(NYC_TAXI.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('NYC_TAXI.MARTS.DIM_DRIVER','TABLE')) WHERE tag_database='NYC_TAXI' AND tag_schema='GOUVERNANCE' AND tag_name='DONNEE_PERSONNELLE'
+UNION ALL
+SELECT object_schema,object_name,column_name,tag_value FROM TABLE(NYC_TAXI.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('NYC_TAXI.MARTS.MART_DRIVER_MONTHLY','TABLE')) WHERE tag_database='NYC_TAXI' AND tag_schema='GOUVERNANCE' AND tag_name='DONNEE_PERSONNELLE'
 ), mesures AS (
  SELECT a.schema_nom,a.table_nom,a.colonne,a.nature,
-        SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE',
-          'NYC_TAXI.'||a.schema_nom||'.'||a.table_nom||'.'||a.colonne,'COLUMN') AS nature_obtenue,
-        c.comment
+        t.tag_value AS nature_obtenue, c.comment
  FROM attendues a
+ LEFT JOIN tags t ON t.object_schema=a.schema_nom AND t.object_name=a.table_nom
+   AND t.column_name=a.colonne
  LEFT JOIN NYC_TAXI.INFORMATION_SCHEMA.COLUMNS c
  ON c.table_schema=a.schema_nom AND c.table_name=a.table_nom AND c.column_name=a.colonne
 ), par_table AS (

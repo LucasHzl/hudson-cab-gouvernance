@@ -1,6 +1,5 @@
 -- Fiche rejouable : descriptions et tags ; aucune recréation de table.
--- Les attributs professionnels sans valeur de tag adaptée restent inventoriés.
--- Couverture incomplète du tag DONNEE_PERSONNELLE : voir docs/VEILLE.md et README.
+-- Classification complète : extension donnee_professionnelle/activite, voir docs/DECISIONS.md.
 USE SECONDARY ROLES NONE;
 USE ROLE TRANSFORMER;
 USE WAREHOUSE NYC_TAXI_WH;
@@ -13,9 +12,9 @@ COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.email IS 'Donnée personnelle. Adresse de
 COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.phone IS 'Donnée personnelle. Numéro de téléphone de contact du chauffeur.';
 COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.birth_date IS 'Donnée personnelle. Date de naissance complète ; ANALYSTE ne doit obtenir que l’année.';
 COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.tlc_license_number IS 'Donnée personnelle. Numéro officiel de licence TLC du chauffeur.';
-COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.depot IS 'Donnée personnelle. Dépôt de rattachement du chauffeur ; attribut professionnel et clé du filtrage. Inventoriée ; valeur de tag adaptée absente du contrat.';
-COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.hire_date IS 'Donnée personnelle. Date de début de contrat ; intervient dans l’ancienneté. Inventoriée ; valeur de tag adaptée absente du contrat.';
-COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.end_date IS 'Donnée personnelle. Date de fin de contrat ; NULL signifie en poste ; déclenche le délai de purge. Inventoriée ; valeur de tag adaptée absente du contrat.';
+COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.depot IS 'Donnée personnelle. Dépôt de rattachement du chauffeur ; attribut professionnel et clé du filtrage. Classification : catégorie complémentaire documentée.';
+COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.hire_date IS 'Donnée personnelle. Date de début de contrat ; intervient dans l’ancienneté. Classification : catégorie complémentaire documentée.';
+COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS.end_date IS 'Donnée personnelle. Date de fin de contrat ; NULL signifie en poste ; déclenche le délai de purge. Classification : catégorie complémentaire documentée.';
 COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS._source_file IS 'Métadonnée de traçabilité : nom du fichier chargé, sans identité dans le nom.';
 COMMENT ON COLUMN NYC_TAXI.RAW.DRIVERS._loaded_at IS 'Métadonnée de traçabilité : date et heure du chargement Snowflake.';
 
@@ -31,5 +30,8 @@ ALTER TABLE NYC_TAXI.RAW.DRIVERS MODIFY COLUMN phone SET TAG NYC_TAXI.GOUVERNANC
 ALTER TABLE NYC_TAXI.RAW.DRIVERS MODIFY COLUMN birth_date SET TAG NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE = 'date_naissance';
 ALTER TABLE NYC_TAXI.RAW.DRIVERS MODIFY COLUMN tlc_license_number SET TAG NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE = 'identifiant_officiel';
 
+ALTER TABLE NYC_TAXI.RAW.DRIVERS MODIFY COLUMN depot SET TAG NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE = 'donnee_professionnelle';
+ALTER TABLE NYC_TAXI.RAW.DRIVERS MODIFY COLUMN hire_date SET TAG NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE = 'donnee_professionnelle';
+ALTER TABLE NYC_TAXI.RAW.DRIVERS MODIFY COLUMN end_date SET TAG NYC_TAXI.GOUVERNANCE.DONNEE_PERSONNELLE = 'donnee_professionnelle';
 SELECT column_name, comment FROM NYC_TAXI.INFORMATION_SCHEMA.COLUMNS WHERE table_schema = 'RAW' AND table_name = 'DRIVERS' ORDER BY ordinal_position;
 SELECT column_name, tag_name, tag_value FROM TABLE(NYC_TAXI.INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('NYC_TAXI.RAW.DRIVERS', 'table'));

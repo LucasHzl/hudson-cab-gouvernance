@@ -15,6 +15,7 @@ Version du 6 novembre 2026. Les attentes initiales ont précédé les politiques
 | Créer un tag ou une politique | GOUVERNANCE | Propriété du schéma ou CREATE TAG / CREATE MASKING POLICY / CREATE ROW ACCESS POLICY | ACCOUNTADMIN, 01_gouvernance.sql |
 | Poser les tags sur les colonnes | TRANSFORMER | Propriété de la table et APPLY sur chaque tag | GOUVERNANCE pour APPLY, 01_gouvernance.sql |
 | Associer un masque au tag | GOUVERNANCE | Propriété du tag et APPLY MASKING POLICY | ACCOUNTADMIN pour APPLY, 01_gouvernance.sql |
+| Retirer les anciennes associations tag/masque | GOUVERNANCE | Propriété du tag et APPLY MASKING POLICY | Migration D01 ; masques directs posés avant retrait |
 | Attacher une politique de lignes à une table | GOUVERNANCE | APPLY ROW ACCESS POLICY sur le compte | ACCOUNTADMIN, 01_gouvernance.sql |
 | Modifier le mapping rôle/dépôt | GOUVERNANCE | Propriété de ACCES_DEPOT | Création dans 04_acces_depot.sql |
 | Écrire les mesures qualité | TRANSFORMER | INSERT sur QUALITE_RESULTATS et USAGE du schéma | GOUVERNANCE, 01_gouvernance.sql |
@@ -68,13 +69,13 @@ Les volumes après purge évoluent avec la date ; les tests 02 et 10 calculent l
 | A00, avant politiques | Identifier l’exposition excessive de l’analyste | 400 chauffeurs, zéro prénom masqué, 400 dates complètes, capture 10 | ROUGE initial prouvé |
 | A01, RH_PAIE | Tous dépôts en clair | Démo 400/0/400/400, capture 03a ; tests détaillés du fichier 01 consignés conformes | Conforme, preuve agrégée |
 | A02, Queens | Queens seulement, identité/téléphone autorisés | Démo 161/0/0/0, capture 03b ; mapping final 143/365, capture 24 | Conforme, preuve agrégée |
-| A03, Bronx | Bronx seulement, identité/téléphone autorisés | Test du fichier 01 consigné conforme ; pas de capture dédiée | Conforme consigné ; recette 10 attendue |
+| A03, Bronx | Bronx seulement, identité/téléphone autorisés | Test du fichier 01 consigné conforme ; pas de capture dédiée | Prouvé par la recette 10, capture 27 (avant D01) |
 | A04, ANALYSTE | Tous dépôts, identité masquée, année seule | Démo 400/400/0/400, capture 03c ; après purge 354 prénoms masqués, capture 26 | Conforme, preuve agrégée |
-| A05, GOUVERNANCE/DIM_DRIVER | Refus d’autorisation | Test du fichier 01 consigné conforme | Conforme consigné ; recette 10 attendue |
+| A05, GOUVERNANCE/DIM_DRIVER | Refus d’autorisation | Test du fichier 01 consigné conforme | Prouvé par la recette 10, capture 27 (avant D01) |
 | A06, ACCOUNTADMIN | Aucune ligne DIM_DRIVER et RAW.DRIVER_SHIFTS | Compteurs 0/0 consignés ; zéro DIM_DRIVER sur captures 03d et 26 | Conforme, preuve agrégée |
-| A07-A08, métiers sur RAW | Refus d’autorisation | Test du fichier 01 consigné conforme | Conforme consigné ; recette 10 attendue |
-| A09, référentiel | Trois dépôts pour les quatre métiers | Tests du fichier 01 consignés conformes | Conforme consigné ; recette 10 attendue |
-| A10-A11, masques complémentaires | Matrice complète, mensuel compris | Tests du fichier 01 consignés conformes ; captures partielles 03 | Conforme consigné ; recette 10 attendue |
+| A07-A08, métiers sur RAW | Refus d’autorisation | Test du fichier 01 consigné conforme | Prouvé par la recette 10, capture 27 (avant D01) |
+| A09, référentiel | Trois dépôts pour les quatre métiers | Tests du fichier 01 consignés conformes | Prouvé par la recette 10, capture 27 (avant D01) |
+| A10-A11, masques complémentaires | Matrice complète, mensuel compris | Tests du fichier 01 consignés conformes ; captures partielles 03 | Prouvé par la recette 10, capture 27 (avant D01) |
 | A12, catalogue | 25 colonnes/3 tables, descriptions présentes, accès métier | Test du fichier 01 consigné conforme ; 25 lignes accessibles, capture 26 | Conforme, preuve agrégée |
 | A13, fidélité pipeline | Emails non masqués et égaux à STAGING | Zéro masque et zéro écart, capture 26 | Prouvé |
 | A14, rejeu des politiques | Pas de perte des règles | 18 contrôles OK après rejeu 03/04, capture 26 | Prouvé |
@@ -118,3 +119,9 @@ Les scripts 01 et 04 conservent les références initiales avant purge. Après p
 [Capture 27](27_recette_complete_69_controles.png) : 69/69 contrôles conformes, zéro échec sur huit rôles (7 administrateur, 11 analyste, 7 gouvernance, 11 Bronx, 11 Queens, 9 paie, 7 SYSADMIN, 6 TRANSFORMER). Elle consolide les tests détaillés A01-A12 et A17-A20. [Capture 28](28_rejeu_chargement.png) : six contrôles OK, volumes et contenus RAW identiques après deux rejeux ; stage vide. Suspension de la racine consignée après ces opérations, sans capture dédiée.
 
 Avant extension : couverture attendue 39 colonnes personnelles sur quatre tables, zéro écart et 21 colonnes personnelles taguées dans le catalogue métier (25 colonnes au total). Attentes dans tests/12_couverture_tags.sql. Après migration, rejouer également tests/10_recette_complete.sql : 69 contrôles toujours attendus conformes, sans changement de la matrice des accès. Les résultats antérieurs ne valent pas validation de la migration.
+
+## Nouvelle classification — contrôles en attente
+
+La décision D01 ajoute deux catégories et remplace les anciens liens automatiques tag/masque par des attaches directes. La politique textuelle continue de lire le tag ; les quatre DEPOT sont classés sans masque et restent filtrés. Aucun rôle, privilège ni corps métier des masques n’est élargi. Les 35 colonnes masquées restent réparties 9/7/12/7 sur les quatre tables.
+
+Migration autonome : 05_completer_tags.sql. Puis 12_couverture_tags.sql (39 colonnes, quatre tables et catalogue, cinq lignes OK) et 10_recette_complete.sql (69 conformités sur huit rôles). L’état validé par la capture 27 précède cette évolution ; une nouvelle preuve est nécessaire avant de cocher la couverture et la non-régression.
