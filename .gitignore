@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+.AppleDouble
+._*
+
+# Python et uv
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Secrets et configuration locale
+.env
+.env.*
+!.env.example
+.snowflake/
+connections.toml
+*.p8
+*.pem
+
+# Fichiers RH du kit
+**/data/drivers.csv
+**/data/driver_shifts.csv
