@@ -37,7 +37,7 @@ Chaque choix des trois jours doit pouvoir se justifier par cette question.
 
 ### Ce que vous allez construire
 
-![Schéma de la gouvernance](starter-kit/docs/gouvernance.png)
+![Schéma de la gouvernance](docs/gouvernance.png)
 
 - **La veille réglementaire** : un dispositif de veille, des fiches sur les textes qui s'appliquent, et la confrontation du contrat à ces textes.
 - **L'intégration du fichier RH** : stage, tables RAW, chargement rejouable, puis les transformations fournies.

@@ -1,240 +1,114 @@
 # Accès — carte des droits et cahier de tests
 
-Mis à jour le 6 novembre 2026. Attendus écrits avant les politiques. Démo de quatre rôles, mapping, purge, tâches, blocage, rétablissement, audit et maintien des protections observés sur captures. Les tests uniquement déclarés par Lucas restent distingués des preuves visuelles ; le rejeu des politiques A14 est validé par la capture 26. Aucun test non réalisé n’est déclaré vert.
+Version du 6 novembre 2026. Les attentes initiales ont précédé les politiques (commit aafdccd). Le test rouge puis les résultats protégés sont conservés. Les captures montrent uniquement des agrégats et des métadonnées ; aucune valeur personnelle n’est publiée.
 
 ## 1. Propriété et droits
 
-Propriétés ci-dessous prévues par les scripts ; confirmer avec SHOW GRANTS. Le socle 01 a été exécuté selon le retour de Lucas ; script 02 exécuté selon le retour de Lucas.
-
-| Objet | Propriétaire prévu |
+| Objet | Propriétaire |
 |---|---|
-| RAW, vues STAGING, tables MARTS et futures tâches | TRANSFORMER pour les objets qu’il crée |
-| Schéma GOUVERNANCE, tags et QUALITE_RESULTATS | GOUVERNANCE |
-| Futures politiques et table ACCES_DEPOT | GOUVERNANCE |
+| Tables RAW/MARTS, vues STAGING, trois tâches | TRANSFORMER |
+| Schéma GOUVERNANCE, trois tags, politiques, ACCES_DEPOT, QUALITE_RESULTATS | GOUVERNANCE |
 | V_CATALOGUE | TRANSFORMER |
 
-| Rôle | Droits et objets autorisés | Exclus |
-|---|---|---|
-| RH_PAIE, RESP_DEPOT_QUEENS, RESP_DEPOT_BRONX | USAGE base/warehouse/MARTS/GOUVERNANCE ; SELECT sur DIM_DRIVER, MART_DRIVER_MONTHLY et DIM_DEPOT ; vues actuelles/futures du catalogue | RAW, STAGING, écriture métier |
-| ANALYSTE | Mêmes USAGE ; SELECT sur toutes les tables et vues actuelles/futures de MARTS ; vues actuelles/futures de GOUVERNANCE | RAW, STAGING, écriture métier |
-| GOUVERNANCE | USAGE base/warehouse/RAW/MARTS ; propriété du schéma GOUVERNANCE ; APPLY MASKING POLICY et APPLY ROW ACCESS POLICY sur le compte | SELECT sur le personnel |
-| TRANSFORMER | Droits du script 00 ; USAGE et CREATE VIEW sur GOUVERNANCE, APPLY sur les trois tags, INSERT/SELECT sur QUALITE_RESULTATS | Aucun droit de gestion métier supplémentaire prévu |
+| Action | Rôle | Privilège nécessaire | Accordé par / script |
+|---|---|---|---|
+| Créer un tag ou une politique | GOUVERNANCE | Propriété du schéma ou CREATE TAG / CREATE MASKING POLICY / CREATE ROW ACCESS POLICY | ACCOUNTADMIN, 01_gouvernance.sql |
+| Poser les tags sur les colonnes | TRANSFORMER | Propriété de la table et APPLY sur chaque tag | GOUVERNANCE pour APPLY, 01_gouvernance.sql |
+| Associer un masque au tag | GOUVERNANCE | Propriété du tag et APPLY MASKING POLICY | ACCOUNTADMIN pour APPLY, 01_gouvernance.sql |
+| Attacher une politique de lignes à une table | GOUVERNANCE | APPLY ROW ACCESS POLICY sur le compte | ACCOUNTADMIN, 01_gouvernance.sql |
+| Modifier le mapping rôle/dépôt | GOUVERNANCE | Propriété de ACCES_DEPOT | Création dans 04_acces_depot.sql |
+| Écrire les mesures qualité | TRANSFORMER | INSERT sur QUALITE_RESULTATS et USAGE du schéma | GOUVERNANCE, 01_gouvernance.sql |
+| Lire une table métier | Les quatre rôles métier | USAGE base/schéma, SELECT sur table, USAGE warehouse | ACCOUNTADMIN, 02_roles_metier.sql ; filtres et masques ensuite appliqués |
+| Lire le catalogue | Les quatre rôles métier | USAGE base/schéma et SELECT sur vues de GOUVERNANCE | ACCOUNTADMIN, 02_roles_metier.sql |
+| Exécuter les tâches | TRANSFORMER | OWNERSHIP des tâches, EXECUTE TASK sur compte, USAGE warehouse et privilèges des traitements | Installation et propriété des objets |
+| Exécuter une requête | Chaque rôle autorisé | USAGE warehouse, droits sur les objets et contenants | Scripts d’installation et de rôles |
 
-Un USAGE permet d’utiliser un contenant ; SELECT permet d’en lire les objets autorisés. Aucun rôle métier n’hérite de TRANSFORMER. Les rôles métier sont attribués uniquement à l’utilisateur courant pour les tests ; ouverture à d’autres personnes après validation.
+Les rôles métier n’ont aucun accès RAW/STAGING ni écriture métier. ANALYSTE lit toutes les tables/vues présentes et futures de MARTS ; les autres métiers lisent les trois tables du domaine. Tous disposent des vues de catalogue. Les attributions à l’utilisateur courant servent à tester les rôles ; les règles métier ne mentionnent jamais un compte individuel.
 
-Limites de séparation des fonctions : TRANSFORMER possède les tables et peut modifier certaines protections ; GOUVERNANCE peut modifier les règles ; ACCOUNTADMIN peut changer des habilitations. Les tests prouvent le comportement des rôles actifs à un instant donné, pas l’impossibilité pour un administrateur de reconfigurer le système. Auditer les changements et limiter l’usage de ces rôles.
+### Pouvoir de défaire une règle
 
-## 2. Conventions de masquage prévues
+TRANSFORMER possède les tables et peut retirer certaines attaches. GOUVERNANCE peut changer les politiques et le mapping ; l’administrateur peut changer les habilitations. Le dispositif prouve la restriction des lectures avec les règles actuelles, pas une résistance à la reconfiguration malveillante par un propriétaire. Réserver ces rôles aux opérations nécessaires, examiner les changements et auditer les accès. Les masques doivent laisser le pipeline lire en clair pour éviter d’écrire des masques dans les données.
 
-- Texte nominatif ou coordonnée : `[MASQUE]` ; NULL source reste NULL.
-- Date, nombre et booléen : NULL quand masqués.
-- `driver_id` : visible aux quatre rôles métier, exception explicite du contrat.
-- `depot` : visible dans le périmètre autorisé pour expliquer et tester le filtrage. DIM_DEPOT reste lisible sans filtre.
-- `birth_date` : date complète pour RH_PAIE et TRANSFORMER ; NULL pour les autres lecteurs métier.
-- `birth_year` : colonne ajoutée, calculée et taguée `date_naissance` ; visible pour ANALYSTE, RH_PAIE et TRANSFORMER. Elle évite de présenter un faux 1er janvier comme date de naissance.
-- Attributs professionnels sans tag adapté : maintien dans l’inventaire ; protections directement par colonne si nécessaire, sans extension des valeurs du contrat.
+## 2. Matrice des valeurs et des lignes
 
-### Matrice colonne par colonne à implémenter
-
-| Colonnes / famille | RH_PAIE | Responsables de dépôt | ANALYSTE | TRANSFORMER |
+| Colonne ou famille | RH_PAIE | Responsables | ANALYSTE | TRANSFORMER |
 |---|---|---|---|---|
-| driver_id | Clair | Clair | Clair | Clair |
-| depot | Tous les dépôts | Leur dépôt seulement | Tous les dépôts | Tous |
-| first_name, last_name, driver_name | Clair | Clair, leur périmètre | Masqué | Clair |
-| phone | Clair | Clair, leur périmètre | Masqué | Clair |
-| email, tlc_license_number | Clair | Masqué | Masqué | Clair |
+| driver_id | Clair | Clair, leur dépôt | Clair | Clair |
+| depot | Tous | Leur dépôt | Tous | Tous |
+| first_name, last_name, driver_name | Clair | Clair, leur dépôt | [MASQUE] | Clair |
+| phone | Clair | Clair, leur dépôt | [MASQUE] | Clair |
+| email, tlc_license_number | Clair | [MASQUE] | [MASQUE] | Clair |
 | birth_date | Date complète | NULL | NULL | Date complète |
 | birth_year | Année | NULL | Année | Année |
-| hire_date, end_date | Clair | NULL | NULL (minimisation retenue) | Clair |
-| is_active, tenure_years | Clair | NULL | Clair, analyse du personnel | Clair |
-| activity_month, nb_shifts, hours_worked, trips_count, revenue_usd | Clair | NULL (lecture stricte de la matrice, hors exceptions driver_id/depot) | Clair pour analyser l’activité | Clair |
+| hire_date, end_date | Clair | NULL | NULL | Clair |
+| is_active, tenure_years | Clair | NULL | Clair | Clair |
+| activity_month, nb_shifts, hours_worked, trips_count, revenue_usd | Clair | NULL | Clair | Clair |
 
-Pour les responsables, le contrat ne prévoit en clair que noms/prénoms/téléphone et l’exception driver_id ; depot reste la clé visible de périmètre, comme le prévoit le test DISTINCT depot du modèle. Les autres attributs sont masqués. Ces choix sont de mise en œuvre, sans changement des rôles ni des catégories de tags.
+NULL source reste NULL. Masquer une date par NULL évite de fabriquer une fausse date. birth_year est calculée séparément. Les attributs d’activité visibles pour ANALYSTE permettent l’analyse prévue sans révéler directement l’identité. Pour les responsables, la lecture stricte du contrat ne laisse que identité/téléphone, driver_id et clé de périmètre ; les mesures sont masquées.
 
-## 3. Références de volume avant purge
+GOUVERNANCE reçoit un refus d’autorisation sur les données RH ; ACCOUNTADMIN et SYSADMIN obtiennent zéro ligne sur les quatre tables personnelles par absence du mapping. DIM_DEPOT est un référentiel sans données personnelles : trois lignes visibles à tous les métiers, sans filtre. Les rôles secondaires sont désactivés dans les parcours de test.
 
-Références anonymes calculées localement sur les fichiers du kit le 6 novembre 2026, en reproduisant le nettoyage du dépôt et le regroupement mensuel des SQL. Totaux confirmés par la capture `08_volumes_initialisation.png` ; répartition par dépôt encore à comparer dans Snowflake. Référence STAGING : dédoublonnage par shift_id ; l’ordre des doublons ex æquo ne doit pas modifier ces regroupements.
+### Chauffeur témoin D0003
 
-| Dépôt | Chauffeurs DIM_DRIVER | Lignes MART_DRIVER_MONTHLY |
-|---|---:|---:|
-| Queens | 161 | 365 |
-| Bronx | 122 | 290 |
-| Brooklyn | 117 | 259 |
-| Total | 400 | 914 |
+Le témoin suit exactement cette matrice : paie en clair, responsable de son dépôt avec identité/téléphone, autre responsable sans ligne, analyste avec identifiant interne/année et identité masquée. Si le témoin est purgé, tous les métiers obtiennent zéro ligne. Les vérifications de valeurs se font dans Snowflake ; leurs sorties publiques sont des indicateurs de conformité, pas les noms, coordonnées ou licences du témoin. La recette complète compare toutes les lignes au périmètre de référence, au lieu de dépendre d’un seul témoin.
 
-## 4. Cahier de tests — attendu / obtenu
+## 3. Comptages et preuves d’accès
 
-Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu. La démo ne suffit pas à valider toutes les colonnes ni les deux tables métier. Les références sont celles d’avant purge. Après purge, recalculer les références autorisées avec TRANSFORMER ; ne pas exiger artificiellement 400 chauffeurs.
-
-| Test | Rôle / opération | Attendu après politiques | Obtenu | Statut |
-|---|---|---|---|---|
-| A00 | ANALYSTE, test avant politiques | Cible finale : 400 chauffeurs / 400 prénoms masqués / 0 date complète | Capture : 400 / 0 / 400 | ROUGE observé avant protection |
-| A01 | RH_PAIE, comptages | 400 chauffeurs, 914 lignes mensuelles, valeurs autorisées en clair | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
-| A02 | RESP_DEPOT_QUEENS | 161 chauffeurs, 365 lignes mensuelles ; aucun autre dépôt | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
-| A03 | RESP_DEPOT_BRONX | 122 chauffeurs, 290 lignes mensuelles ; aucun autre dépôt | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A04 | ANALYSTE | 400 chauffeurs, 914 lignes mensuelles ; noms/téléphone/email/licence masqués ; année seule | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
-| A05 | GOUVERNANCE lit DIM_DRIVER | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | Paire 0 / 0 confirmée par Lucas ; DIM_DRIVER également prouvé par 03d | VERT déclaré et capture partielle |
-| A07 | RH_PAIE lit RAW.DRIVER_SHIFTS | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A08 | ANALYSTE lit RAW.DRIVERS | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A09 | Les quatre métiers lisent DIM_DEPOT | Trois garages sans filtre | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A10 | Responsables : emails/licences/date/année/attributs complémentaires | Aucun email/licence en clair ; dates, année et autres attributs masqués NULL | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
-| A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | 12 contrôles de reconstruction déclarés OK par Lucas, dont fidélité des emails au pipeline | VERT déclaré |
-| A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Capture 26 : les 18 contrôles sont OK après le parcours de rejeu 03/04 puis test 06 | VERT observé sur les 18 contrôles |
-| A15 | Réexécuter les transformations | Protections, commentaires et catalogue maintenus | Capture 15 : 18 contrôles après tâches OK, dont quatre tables protégées et descriptions présentes | VERT observé sur les 18 contrôles ; ne remplace pas tout A01-A13 |
-| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Références dynamiques après purge : Queens 143/365, extension Bronx 249/655, restauration 143/365 | Capture 24 : trois étapes conformes, aucune politique modifiée | VERT observé |
-| A17 | Rôle SYSADMIN, absent du mapping | Zéro ligne RH | Non exécuté | À faire |
-| A18 | RAW avec ACCOUNTADMIN : noms et emails | Zéro ligne, pas de donnée personnelle à afficher | Non exécuté | À faire |
-| A19 | GOUVERNANCE lit RAW ou STAGING | Refus d’autorisation | Non exécuté | À faire |
-| A20 | Chaque changement de rôle | USE SECONDARY ROLES NONE puis warehouse ; CURRENT_ROLE attendu | Non exécuté | À faire |
-
-Les assertions de valeurs réelles se font localement dans Snowflake sans copier de noms, emails, téléphones ou licences dans Git. Le SQL publié renvoie des comptes et indicateurs ; il ne publie pas de valeur personnelle du chauffeur témoin. La matrice ci-dessus couvre les mêmes attentes que le tableau de valeurs du modèle.
-
-## 5. Ordre de vérification
-
-1. Exécuter le script de rôles puis la migration birth_year et sa vérification (400, zéro incohérence).
-2. Les tests d’identité/filtrage doivent être rouges avant les politiques : constater seulement des agrégats, sans ouvrir les rôles à d’autres utilisateurs. Les refus RAW et GOUVERNANCE peuvent déjà être verts.
-3. Implémenter le masquage et le filtrage d’après ces attentes, puis rejouer les blocs et remplir obtenu.
-4. Réexécuter le pipeline et vérifier la stabilité ; tester le mapping puis restaurer son état.
-5. Ranger les preuves publiques sans données du personnel, indiquer la date et le rôle de chaque exécution.
-
-Sources : contrat §4 ; guide jour 2 ; documentation officielle Snowflake [GRANT](https://docs.snowflake.com/en/sql-reference/sql/grant-privilege), consultée le 6 novembre 2026.
-
-## 6. Résultat avant politiques et implémentation préparée
-
-Capture `10_test_analyste_avant_politiques.png`, reçue le 6 novembre 2026 : 400 chauffeurs, zéro prénom masqué, 400 dates complètes visibles. Test rouge observé sur l’état avant protection ; il ne valide pas les accès finaux. Lucas confirme l’exécution des rôles et de la migration ; vérification de la migration déclarée correcte, sans capture dédiée.
-
-Implémentation préparée : 03_masquage.sql associe au tag une politique VARCHAR, DATE et NUMBER ; l’exception identifiant_interne ne concerne que les rôles métier autorisés, pas tous les rôles du compte. TRANSFORMER et RH_PAIE ont les valeurs nécessaires en clair. Des politiques directes DATE/FLOAT/NUMBER/BOOLEAN protègent aussi les attributs sans catégorie de tag adaptée. Le dépôt reste la clé de la politique par ligne ; on ne lui attache pas simultanément un masque.
-
-04_acces_depot.sql crée la correspondance et une politique appliquée aux quatre tables RH, RAW compris pour ne laisser aucune ligne aux administrateurs. Le mapping est initialisé par MERGE sans effacer les ajouts. La politique se modifie avec ALTER SET BODY ; au rejeu, une attache déjà correcte est conservée, une attache étrangère provoque une erreur. Aucun rôle métier ne reçoit de droits RAW/STAGING.
-
-Scripts complémentaires : tests/02_test_mapping.sql démontre l’ajout temporaire d’un dépôt (rollback du changement) ; tests/03_demo_quatre_roles.sql rejoue une même requête agrégée pour quatre rôles. Tous les résultats après protection restent non exécutés tant que Lucas n’en transmet pas les preuves. Aucune valeur nominative attendue ni obtenue publiée.
-
-Références techniques consultées le 6 novembre 2026 : [ALTER TAG](https://docs.snowflake.com/en/sql-reference/sql/alter-tag), [ALTER COLUMN](https://docs.snowflake.com/en/sql-reference/sql/alter-table-column), [politiques de lignes](https://docs.snowflake.com/en/user-guide/security-row-intro), [POLICY_REFERENCES](https://docs.snowflake.com/en/sql-reference/functions/policy_references).
-
-### Erreur de compilation du masquage — 6 novembre 2026
-
-Lucas signale une erreur de syntaxe sur la deuxième politique du bloc d’attache groupée au tag (ligne 42 de la version initiale). Correctif local : trois instructions ALTER TAG SET MASKING POLICY distinctes avec FORCE, une par type. L’exécution initiale a pu créer les premières politiques sans les attacher ; le script peut être repris depuis le début. Statut : correctif préparé, compilation et tests après protection à confirmer. Aucun test vert ajouté sur cette seule correction.
-
-## 7. Démonstration verte observée — 6 novembre 2026
-
-Même requête agrégée du script tests/03_demo_quatre_roles.sql, quatre captures reçues et vérifiées. Colonnes : rôle, nombre de chauffeurs, prénoms masqués, dates complètes visibles, années visibles. Ces contrôles portent sur DIM_DRIVER, pas sur toutes les règles du cahier.
-
-| Test de démo | Rôle | Attendu (chauffeurs / prénoms masqués / dates / années) | Obtenu sur capture | Statut | Preuve |
-|---|---|---|---|---|---|
-| D01 | RH_PAIE | 400 / 0 / 400 / 400 | 400 / 0 / 400 / 400 | VERT observé | [03a_acces_rh_paie.png](03a_acces_rh_paie.png) |
-| D02 | RESP_DEPOT_QUEENS | 161 / 0 / 0 / 0 | 161 / 0 / 0 / 0 | VERT observé | [03b_acces_queens.png](03b_acces_queens.png) |
-| D03 | ANALYSTE | 400 / 400 / 0 / 400 | 400 / 400 / 0 / 400 | VERT observé | [03c_acces_analyste.png](03c_acces_analyste.png) |
-| D04 | ACCOUNTADMIN | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 | VERT observé | [03d_acces_accountadmin.png](03d_acces_accountadmin.png) |
-
-Les captures sont des résultats agrégés sans noms, coordonnées, licences ni dates individuelles. Elles satisfont la preuve visuelle de comparaison de deux rôles, avec quatre rôles documentés. Les refus d’accès GOUVERNANCE/RAW, le rôle Bronx, les valeurs complémentaires, MART_DRIVER_MONTHLY, le catalogue métier, l’extension du mapping et la stabilité après pipeline restent à vérifier. Ne pas transformer ces tests partiels en un cahier entièrement vert.
-
-### Retours sur les fichiers 01 et 02 — 6 novembre 2026
-
-Lucas déclare les résultats du fichier 01 conformes, sauf une grille interprétée comme « 1 · 0 » sur le bloc attendu zéro/zéro. Cette lecture peut correspondre au numéro de ligne 1 et à la valeur zéro, sans que cela soit confirmé. Le bloc ACCOUNTADMIN affiche désormais les deux compteurs dans un SELECT unique avec des noms explicites ; aucun résultat ambigu déclaré vert.
-
-Pour le mapping, 655 était la sortie du second SELECT, les 283 chauffeurs provenant d’un SELECT distinct. Les deux compteurs sont regroupés dans une seule ligne ; après restauration, ils doivent valoir 161 et 365. Ces clarifications changent uniquement l’affichage des tests, pas les politiques ou le mapping. Ne pas réinsérer une entrée pour afficher un compteur : employer la requête combinée sur l’état présent, puis terminer le ROLLBACK si la transaction de test est encore ouverte.
-
-### Confirmation et simplification des tests — 6 novembre 2026
-
-Lucas confirme ACCOUNTADMIN 0/0 et Queens restauré à 161/365. L’étape étendue n’est pas attestée par un résultat conjoint 283/655 ; A16 reste partiel.
-
-02_test_mapping.sql affiche désormais un tableau final de trois étapes, obtenu et attendu : 161/365, 283/655, 161/365. L’ajout et son retrait sont validés dans des transactions séparées avant changement de rôle ; l’entrée doit être absente au départ, sinon le test s’arrête sans l’écraser. L’état final conserve les habilitations initiales. Cette version remplace le parcours interactif avec ROLLBACK ; les mentions précédentes décrivent l’historique.
-
-04_reconstruction_verification.sql réexécute les trois INSERT OVERWRITE des fichiers métier avec TRANSFORMER, compare emails et source sans les afficher, vérifie maintien des compteurs de tags/politiques de DIM_DRIVER et des descriptions, puis contrôle les accès. Tableau final de 12 assertions, avant purge, toutes attendues OK. Préparé, non exécuté. Le test après tâches devra encore vérifier les quatre tables et l’ensemble du catalogue.
-
-### Correctif du test de reconstruction — 6 novembre 2026
-
-Erreur signalée sur les mots « vide » et « la » : deux commentaires avaient été extraits comme instructions lors de la préparation du script 04. Les deux lignes sont retirées ; les trois INSERT OVERWRITE INTO ont été comparés intégralement aux fichiers rh/marts correspondants, avec recherche ancrée en début de ligne SQL. Ce contrôle local ne confirme pas l’exécution Snowflake. Script corrigé à relancer entièrement ; aucune table, politique ou tag supprimé. Le test de reconstruction reste en attente de résultat.
-
-## 8. Conservation et purge — tests attendus avant exécution
-
-Reconstruction 04 corrigée déclarée OK par Lucas le 6 novembre 2026 ; pas de capture dédiée reçue. L’extension du mapping reste à confirmer par le tableau de trois étapes avant de modifier les volumes.
-
-| Test | Attendu | Obtenu | Statut |
-|---|---|---|---|
-| R01, conservation_rh.sql | Quatre tables RH, retention_time=1 | Capture 11 : quatre tables à 1, toutes OK | VERT observé |
-| R02, purge complète | Aucun chauffeur expiré ni copie liée dans RAW/MARTS | Capture 12 : quatre contrôles de copies expirées à zéro | VERT observé |
-| R03, contrôle avant/après | Au 6 novembre 2026 : 46 concernés, 400→354 chauffeurs ; 25 951 services inchangés car aucun ne concerne ces partants | Capture 12 : 354 chauffeurs courants, 25 951 services ; 400 historiques | VERT observé |
-| R04, Time Travel | Après purge, l’état RAW.DRIVERS immédiatement antérieur reste lisible et compte 400 chauffeurs | Capture 12, première exécution : historique 400 après purge à 354 | VERT observé |
-| R05, délai de Time Travel | Paramètre limité à un jour ; pas d’essai réel après 24 heures à ce stade | Rétention 1 observée ; disparition après 24 h non testée | PARAMÈTRE vérifié, délai réel non testé |
-
-Tests SQL : conservation_rh.sql puis tests/05_preuve_purge.sql. Le second exécute la purge : ne pas purger d’abord ailleurs, sinon la première preuve portera sur un état déjà purgé. Valeurs locales de référence calculées à partir du kit, sans publication d’IDs. Les futures tâches réutiliseront le même bloc de purge. Données historiques soumises aux droits et politiques actuels ; ne pas créer de clone personnel pour cette démonstration.
-
-## 9. Qualité — attentes avant exécution
-
-| Contrôle | Source | Seuil / gravité | Attendu après la purge initiale | Obtenu |
-|---|---|---|---|---|
-| licence_unique | RAW.DRIVERS, formule fournie du kit | 0, avertissement | 4 anomalies, ALERTE | Capture 06 : 4, ALERTE, conforme |
-| email_valide | RAW.DRIVERS, absence de @ ou NULL | 0, avertissement | 7 anomalies, ALERTE | Capture 06 : 7, ALERTE, conforme |
-| service_rattache | RAW.DRIVER_SHIFTS, chauffeur absent de RAW.DRIVERS | 50, bloquant seulement au-delà | 25 anomalies, OK | Capture 06 : 25 / 50, OK, conforme |
-| Historisation | QUALITE_RESULTATS | Une ligne par règle et exécution | Trois lignes ajoutées à chaque lancement | Non exécuté |
-| Blocage | Future tâche T_QUALITE | Mesure > seuil | Résultat committé puis erreur ; T_TABLES ne part pas | Non exécuté |
-
-Ces attentes viennent d’un calcul local sur le kit après exclusion des 46 chauffeurs expirés ; à confronter à Snowflake. La qualité ne corrige pas automatiquement les données. Les avertissements poursuivent la chaîne ; le seuil de 50 ne fait pas disparaître les 25 services orphelins. Les mesures sont validées en transaction avant la levée éventuelle de l’erreur bloquante.
-
-Préférence de preuves de Lucas : annoncer chaque capture avant l’instruction d’exécution et indiquer le point d’arrêt. La première preuve de purge est conservée ; au rejeu, 354 peut devenir la référence historique courante, sans invalider la capture initiale à 400.
-
-## 10. Chaîne quotidienne — attentes avant exécution
-
-Capture 06_resultats_qualite_manuels.png : trois mesures enregistrées au même instant, 6 novembre 2026 à 14:27:08.482 tel qu’affiché par Snowflake ; aucun fuseau déduit du TIMESTAMP_NTZ. Résultats conformes aux attentes. Elle ne prouve pas encore une exécution planifiée ni le blocage.
-
-| Test | Attendu | Obtenu | Statut |
-|---|---|---|---|
-| T01, création du graphe | T_PURGE → T_QUALITE → T_TABLES ; propriétaire TRANSFORMER, suspendues après création | Capture 13 : trois tâches, propriétaire et dépendances conformes | VERT observé |
-| T02, exécution normale | Les trois tâches SUCCEEDED dans le même graph_run_group_id | Capture 14 : trois succès successifs, même groupe 423b069a-0336-48bc-ab69-a4ca254ae315 | VERT observé |
-| T03, qualité par tâche | Trois nouvelles mesures, 4/7/25 et ALERTE/ALERTE/OK | Capture 16 : 4/7/25 conformes, mesure à 14:52:36.203 telle qu’affichée | VERT observé |
-| T04, contrôles après tâche | 18 contrôles OK : masques/filtre des quatre tables, descriptions, rétention, source et accès | Capture 15 : 18 lignes OK, 354 chauffeurs après purge | VERT observé |
-| T05, règle bloquante | Mesure de service_rattache supérieure au seuil de test : T_QUALITE FAILED, T_TABLES non démarrée, résultat enregistré | Captures 20 et 21 : purge réussie, qualité FAILED, reconstruction NON_DEMARREE ; 25 / 0 / ALERTE enregistré | VERT observé |
-| T06, rétablissement | Seuil contractuel 50 rétabli et nouvelle chaîne réussie | Captures 22/23 : trois SUCCEEDED, service_rattache 25 / 50 / OK | VERT observé |
-
-La racine est prévue chaque jour à 05:00 Europe/Paris ; ses enfants n’ont pas d’horaire propre. Le rôle propriétaire détermine les accès, pas celui qui regarde l’interface. Les scripts de création laissent le graphe suspendu ; lancer_taches_rh.sql l’active et demande une exécution. Consulter suivi_taches_rh.sql pour le statut, sans redemander une exécution. Suspendre la racine à la fin du brief.
-
-### Première chaîne exécutée — 6 novembre 2026
-
-Preuves : [création sous TRANSFORMER](13_creation_taches_transformer.png) et [exécution réussie](14_execution_chaine_reussie.png). Purge de 14:52:31.843 à 14:52:34.964, qualité de 14:52:35.914 à 14:52:38.510, reconstruction de 14:52:38.922 à 14:52:42.519, fuseau affiché +0100. Aucun message d’erreur ; même identifiant de groupe. Cela prouve une exécution demandée manuellement de la chaîne prévue quotidiennement, sans encore observer un départ automatique à 05:00. Les 18 contrôles après reconstruction et le test de blocage restent à exécuter.
-
-### Protections après tâches et qualité confirmées
-
-[Capture 15](15_controles_apres_taches.png) : 18 contrôles OK, dont les masques (9/7/12/7 colonnes), quatre politiques de lignes, rétention à un jour sur quatre tables, catalogue métier lisible et descriptions complètes. ANALYSTE voit les 354 prénoms masqués et aucune date de naissance complète ; ACCOUNTADMIN ne voit aucune ligne. [Capture 16](16_qualite_par_tache.png) : trois mesures récentes conformes. Le graphe visuel avec exécution réussie reste une capture exigée explicitement par le brief, distincte du tableau de suivi déjà conservé.
-
-### Graphe visuel et test du blocage préparé
-
-[Capture 17](17_graphe_taches.png) : graphe T_PURGE → T_QUALITE → T_TABLES, propriétaire TRANSFORMER et warehouse NYC_TAXI_WH. État Started = tâche activée, pas succès d’un traitement. [Capture 18](18_historique_t_purge.png) : succès de la racine seule, onglet Task sélectionné. La preuve des trois succès du même groupe reste la capture 14 ; les vues se complètent.
-
-Test T05 préparé dans tests/07_preparer_blocage.sql : changer seulement le seuil de service_rattache à 0, sans injecter de données personnelles. Avec les 25 anomalies existantes, attendre T_PURGE SUCCEEDED, T_QUALITE FAILED, T_TABLES NON_DEMARREE pour le même groupe ; consulter les mesures durables, dont service_rattache 25 / 0 / ALERTE. Après captures, tests/08_retablir_seuil.sql rétablit exactement le bloc normal à 50. Relancer et vérifier trois SUCCEEDED et 25 / 50 / OK pour T06. Ces tests ne sont pas encore exécutés.
-
-### Blocage qualité observé — 6 novembre 2026
-
-[Capture 19](19_succes_graphe_complet.png) : vue Task Graph, exécution réussie de 14:52:31, durée 11 s ; complète la structure graphique de la capture 17. [Capture 20](20_blocage_qualite_chaine.png) : groupe 8be744ce-6b4c-415d-84be-78c61bd5e01d, purge SUCCEEDED, qualité FAILED, reconstruction NON_DEMARREE, de 15:13:04.922 à 15:13:09.796 (+0100). Le message d’erreur est tronqué dans la grille ; le nom complet de l’exception n’est pas lisible. [Capture 21](21_mesures_qualite_seuil_zero.png) : mesures durables à 15:13:08.247 tel qu’affiché, dont service_rattache 25 / seuil 0 / ALERTE. Le résultat fonctionnel attendu est confirmé, aucune reconstruction n’a démarré dans ce groupe. T06 reste à exécuter : rétablir 50 avec 08_retablir_seuil.sql, lancer une chaîne puis vérifier trois succès et la qualité 25 / 50 / OK.
-
-### Rétablissement confirmé et audit à exécuter
-
-Captures [22](22_chaine_retablie_seuil_50.png) et [23](23_qualite_retablie_seuil_50.png) : groupe ea194c1c-d964-4b67-99de-b0a1067bbe75, trois SUCCEEDED de 15:36:42.723 à 15:36:56.667 (+0100). Mesure 15:36:50.618 telle qu’affichée, service_rattache 25 / 50 / OK, emails 7 et licences 4 en ALERTE. T06 observé conforme.
-
-| Test d’audit | Attendu | Obtenu |
+| Périmètre | Avant purge : chauffeurs / mensuel | Après purge : chauffeurs / mensuel |
 |---|---|---|
-| AU01 | 06_audit.sql : objets/colonnes de DIM_DRIVER, rôles et comptages sur sept jours, jointure query_id | Capture 07 : 13 groupes, quatre métiers, TRANSFORMER et ACCOUNTADMIN observés |
-| AU02 | 06b_audit_detail_prive.sql : utilisateurs et rôles consultables dans Snowflake sans publication du résultat | En attente d’exécution |
+| Queens | 161 / 365 | 143 / 365 |
+| Bronx | 122 / 290 | 106 / 290, déduit de la différence 249−143 du mapping |
+| Brooklyn | 117 / 259 | 105 / 259, différence au total 354 |
+| Total | 400 / 914 | 354 / 914 |
 
-La capture publique attendue provient uniquement de 06_audit.sql. Historique retardé jusqu’à trois heures ; ne pas conclure à une absence d’accès à partir d’un résultat vide. Une colonne référencée peut être masquée ou une requête ne renvoyer aucune ligne : les historiques ne prouvent pas à eux seuls une divulgation en clair. Les transformations qui lisent la dimension figurent aussi dans les résultats, avec leur type de requête.
+Les volumes après purge évoluent avec la date ; les tests 02 et 10 calculent leurs références avec TRANSFORMER.
 
-### Audit et lignage observés — 6 novembre 2026
+| Test | Attendu | Résultat consigné / preuve | État |
+|---|---|---|---|
+| A00, avant politiques | Identifier l’exposition excessive de l’analyste | 400 chauffeurs, zéro prénom masqué, 400 dates complètes, capture 10 | ROUGE initial prouvé |
+| A01, RH_PAIE | Tous dépôts en clair | Démo 400/0/400/400, capture 03a ; tests détaillés du fichier 01 consignés conformes | Conforme, preuve agrégée |
+| A02, Queens | Queens seulement, identité/téléphone autorisés | Démo 161/0/0/0, capture 03b ; mapping final 143/365, capture 24 | Conforme, preuve agrégée |
+| A03, Bronx | Bronx seulement, identité/téléphone autorisés | Test du fichier 01 consigné conforme ; pas de capture dédiée | Conforme consigné ; recette 10 attendue |
+| A04, ANALYSTE | Tous dépôts, identité masquée, année seule | Démo 400/400/0/400, capture 03c ; après purge 354 prénoms masqués, capture 26 | Conforme, preuve agrégée |
+| A05, GOUVERNANCE/DIM_DRIVER | Refus d’autorisation | Test du fichier 01 consigné conforme | Conforme consigné ; recette 10 attendue |
+| A06, ACCOUNTADMIN | Aucune ligne DIM_DRIVER et RAW.DRIVER_SHIFTS | Compteurs 0/0 consignés ; zéro DIM_DRIVER sur captures 03d et 26 | Conforme, preuve agrégée |
+| A07-A08, métiers sur RAW | Refus d’autorisation | Test du fichier 01 consigné conforme | Conforme consigné ; recette 10 attendue |
+| A09, référentiel | Trois dépôts pour les quatre métiers | Tests du fichier 01 consignés conformes | Conforme consigné ; recette 10 attendue |
+| A10-A11, masques complémentaires | Matrice complète, mensuel compris | Tests du fichier 01 consignés conformes ; captures partielles 03 | Conforme consigné ; recette 10 attendue |
+| A12, catalogue | 25 colonnes/3 tables, descriptions présentes, accès métier | Test du fichier 01 consigné conforme ; 25 lignes accessibles, capture 26 | Conforme, preuve agrégée |
+| A13, fidélité pipeline | Emails non masqués et égaux à STAGING | Zéro masque et zéro écart, capture 26 | Prouvé |
+| A14, rejeu des politiques | Pas de perte des règles | 18 contrôles OK après rejeu 03/04, capture 26 | Prouvé |
+| A15, reconstruction | Protections et descriptions maintenues | 18 contrôles OK après tâches, capture 15 | Prouvé sur les contrôles exécutés |
+| A16, extension par mapping | Ajouter Bronx sans modifier la politique, puis restaurer | 143/365 → 249/655 → 143/365, trois OK, capture 24 | Prouvé |
+| A17-A20, contrôles additionnels | SYSADMIN zéro, administrateur RAW zéro, refus GOUVERNANCE/RAW/STAGING, bon rôle actif | Inclus dans 10_recette_complete.sql | Attente d’exécution |
 
-[Audit](07_audit.png) : 13 groupes rôle/type de requête sur DIM_DRIVER, avec les quatre métiers, TRANSFORMER et ACCOUNTADMIN. SELECT, SET et lectures liées aux écritures apparaissent ; aucun utilisateur ni texte de requête publié. ACCOUNTADMIN référencie la table mais les tests d’accès lui renvoient zéro ligne : l’historique d’accès ne prouve pas une divulgation. AU01 validé ; AU02 nominatif privé non attesté.
+## 4. Conservation, qualité et tâches
 
-[Lignage](04_lignage.png) : DIM_DRIVER et STG_RH__DRIVER_SHIFTS alimentent MART_DRIVER_MONTHLY. V_CATALOGUE est visible en aval ; cette dépendance de catalogue n’est pas une preuve de copie des valeurs RH dans la vue.
+| Test | Attendu | Obtenu / preuve | État |
+|---|---|---|---|
+| R01 | Quatre rétentions à un jour | Quatre lignes à 1, capture 11 | Prouvé |
+| R02-R03 | Copies expirées supprimées, 400 → 354 | Zéro copie expirée et 354 chauffeurs, capture 12 | Prouvé |
+| R04 | État avant purge encore lisible dans Time Travel | 400 historiques contre 354 courants, capture 12 | Prouvé |
+| R05 | Pas de restauration Time Travel après un jour | Paramètre 1 observé ; essai à 24 h non réalisé | Paramètre prouvé, délai réel non testé |
+| R06 | Stage vide | Zéro fichier, capture 25 | Prouvé |
+| Q01 | licence_unique, seuil 0, avertissement | 4 / 0 / ALERTE, captures 06/16/23 | Prouvé |
+| Q02 | email_valide, seuil 0, avertissement | 7 / 0 / ALERTE, mêmes captures | Prouvé |
+| Q03 | service_rattache, seuil 50, bloquant au-delà | 25 / 50 / OK, capture 23 | Prouvé |
+| T01-T02 | Propriétaire TRANSFORMER, ordre purge/qualité/reconstruction, trois succès | Captures 13/14/17/19/22 | Prouvé |
+| T03-T04 | Mesures ajoutées et protections conservées | Mesures récentes et 18 contrôles OK, captures 15/16/26 | Prouvé |
+| T05 | Au seuil temporaire 0, échec qualité sans reconstruction et journal durable | SUCCEEDED / FAILED / NON_DEMARREE, 25/0/ALERTE, captures 20/21 | Prouvé |
+| T06 | Rétablir 50, nouvelle chaîne réussie | Trois succès et 25/50/OK, captures 22/23 | Prouvé |
+| AU01 | Rôles et colonnes référencées sur sept jours | 13 groupes rôle/type, capture 07 | Prouvé |
+| AU02 | Comptes utilisateurs consultables sans publication | 06b_audit_detail_prive.sql | Script prêt, consultation privée non consignée |
+| L01 | Lignage du mensuel | DIM_DRIVER + STAGING services vers mensuel, capture 04 | Prouvé |
+| I01 | Deux rejeux du chargement, stage vide, contenus RAW inchangés | 11_rejeu_chargement.sql, six assertions | Attente d’exécution |
 
-A16 reste à confirmer : 02_test_mapping.sql utilise maintenant des références calculées sous TRANSFORMER, adaptées à l’état courant après purge. Comparaison du périmètre Queens seul, Queens+Bronx, puis Queens restauré ; trois lignes OK attendues, pas de changement de politique. 09_stage_vide.sql permet de conserver le contrôle LIST à zéro fichier sans recharger les sources purgées.
+Les mesures sont enregistrées avant l’exception bloquante. Les deux alertes non bloquantes ne sont pas des échecs techniques. L’audit ne démontre pas à lui seul une visibilité en clair ; les tests de lecture apportent cette distinction. ACCOUNTADMIN peut référencer la table tout en obtenant zéro ligne.
 
-## Résultats finaux : mapping et stage
+## 5. Recette finale renforcée
 
-[Capture 24](24_mapping_apres_purge.png) : Queens 143 chauffeurs / 365 lignes mensuelles ; extension temporaire Bronx 249 / 655 ; restauration 143 / 365. Les trois statuts sont OK, mapping restauré. Les différences avec les références initiales viennent des 46 chauffeurs purgés ; le mensuel reste inchangé car aucun service de ces partants n’existe dans ce jeu.
+10_recette_complete.sql compare sous chaque rôle les périmètres et les attributs autorisés à leurs références TRANSFORMER, vérifie tous les masques de la dimension et du mensuel, les quatre accès au référentiel/catalogue, 22 refus RAW/STAGING et GOUVERNANCE, et les lectures administrateur/SYSADMIN. Les comparaisons d’empreintes restent internes à la session ; seules les conformités sortent. Les objets sont interrogés sous TRANSFORMER avant les tests de refus pour ne pas prendre une table absente pour une protection correcte.
 
-[Capture 25](25_stage_vide.png) : stage_fichiers=0, attendu=0, OK. Ce contrôle LIST n’atteste pas à lui seul le rejeu d’un COPY avec les fichiers présents. Les notes chronologiques ci-dessus décrivent les validations successives ; les tableaux de résultats actualisés font foi.
+11_rejeu_chargement.sql réexécute deux fois le bloc exact du chargement, avec stage vide exigé. Volumes et empreintes complètes des deux RAW doivent rester identiques ; aucun fichier historique n’est redéposé. Cela prouve le rejeu après purge du stage, pas le traitement d’une nouvelle livraison complète.
 
-## Rejeu des politiques — preuve finale
-
-[Capture 26](26_rejeu_politiques_18_controles.png) fournie après le parcours demandé de rejeu 03/04 puis test 06 : 18 lignes OK. Masques sur 9/7/12/7 colonnes, quatre filtres, 354 chauffeurs cohérents avec la source, aucune valeur d’email masquée dans le pipeline, zéro écart email avec STAGING, descriptions présentes, quatre rétentions à un jour, catalogue 25 lignes accessible à ANALYSTE, 354 prénoms masqués, zéro date complète visible pour ANALYSTE et zéro chauffeur visible pour ACCOUNTADMIN. Le tableau final prouve ces assertions ; il ne remplace pas les tests complémentaires non exécutés.
+Les scripts 01 et 04 conservent les références initiales avant purge. Après purge, utiliser les recettes dynamiques 02, 06, 10 et 11. Les tests non exécutés restent identifiés ; aucune validation n’est déduite de la seule présence d’un script.

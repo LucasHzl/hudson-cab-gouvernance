@@ -1,45 +1,38 @@
-# Suivi du projet Hudson Cab
+# Suivi et index des preuves
 
-État au 6 novembre 2026. Lucas exécute les scripts dans Snowflake ; l’assistant inspecte les résultats fournis et maintient les fichiers. Un résultat déclaré reste distingué d’une preuve observée.
+État au 6 novembre 2026. Les captures et résultats consignés sont distingués des scripts sans résultat d’exécution. Les critères détaillés figurent dans [CONTROLE_RENDU.md](CONTROLE_RENDU.md).
 
-## Validations
+## Index
 
-| Élément | État |
-|---|---|
-| Dépôt, Enterprise AWS Paris, installation | Déclarés opérationnels ; données sources exclues de Git |
-| Veille | Cinq fiches, trois sources officielles et fréquence ; inscription CNIL observée. Suivis EDPB/EUR-Lex proposés, non configurés |
-| Inventaire et registre | Sources et dérivations documentées ; preuves renseignées |
-| Intégration | Volumes initiaux contrôlés ; stage vide observé ; rejeu immédiat du COPY non formellement prouvé |
-| Catalogue | Descriptions contrôlées, 25 colonnes dans la vue métier ; limite de couverture de tags signalée, C20 non intégralement validé |
-| Accès | Démo de quatre rôles observée ; tests détaillés conformes déclarés par Lucas, voir ACCES.md |
-| Mapping | Trois étapes observées après purge : 143/365, 249/655, 143/365 ; état initial restauré |
-| Conservation | 46 chauffeurs purgés, 354 restants ; historique 400 accessible, rétention un jour sur quatre tables |
-| Qualité et tâches | Trois règles ; trois tâches réussies sous TRANSFORMER ; blocage et retour au seuil 50 observés |
-| Stabilité | 18 contrôles après tâches OK ; rejeu des scripts de politiques A14 validé, capture 26 |
-| Audit et lignage | Captures observées ; consultation nominative privée de l’audit non attestée |
+| Preuve | Fichier(s) dans docs/ | Résultat |
+|---|---|---|
+| Abonnement CNIL | 01_abonnement_veille.png | Inscription enregistrée |
+| Tags | 02_tags_dim_driver_avant_correction.png | Catégories d’identité posées ; écart de taxonomie identifié |
+| Même requête par rôle | 03a_acces_rh_paie.png, 03b_acces_queens.png, 03c_acces_analyste.png, 03d_acces_accountadmin.png | Comparaison des lectures |
+| Lignage | 04_lignage.png | Sources dimension et STAGING services |
+| Qualité | 06_resultats_qualite_manuels.png, 16_qualite_par_tache.png, 23_qualite_retablie_seuil_50.png | Mesures et rétablissement |
+| Audit | 07_audit.png | Quatre métiers, TRANSFORMER et ACCOUNTADMIN ; 13 groupes rôle/type |
+| Volumes initiaux | 08_volumes_initialisation.png | STAGING 25 933, dépôts 3, dimension 400, mensuel 914 |
+| Catalogue initial | 09_catalogue_avant_correction.csv | Métadonnées, 24 colonnes avant birth_year ; aucune donnée du personnel |
+| Test rouge | 10_test_analyste_avant_politiques.png | Exposition avant protection |
+| Conservation | 11_retention_un_jour.png | Quatre rétentions à un jour |
+| Purge et Time Travel | 12_purge_et_time_travel.png | 354 courants, 400 historiques, zéro copie expirée |
+| Tâches | 13_creation_taches_transformer.png, 14_execution_chaine_reussie.png, 17_graphe_taches.png, 18_historique_t_purge.png, 19_succes_graphe_complet.png | Propriété, structure, succès de la racine puis du graphe |
+| Après reconstruction | 15_controles_apres_taches.png | 18 contrôles OK |
+| Blocage | 20_blocage_qualite_chaine.png, 21_mesures_qualite_seuil_zero.png | Qualité FAILED, reconstruction non démarrée ; mesures durables |
+| Rétablissement | 22_chaine_retablie_seuil_50.png, 23_qualite_retablie_seuil_50.png | Trois succès, seuil final 50 |
+| Mapping | 24_mapping_apres_purge.png | 143/365 → 249/655 → 143/365 |
+| Stage | 25_stage_vide.png | Zéro fichier |
+| Après rejeu des règles | 26_rejeu_politiques_18_controles.png | 18 contrôles OK |
 
-## Captures demandées
+Toutes les catégories de captures explicitement demandées sont présentes. Les images sont conservées sans modification de leur contenu. Les références avant et après purge sont datées, pas interchangeables.
 
-| Preuve | Fichier dans docs/ |
-|---|---|
-| Abonnement de veille | 01_abonnement_veille.png |
-| Tags d’une table | 02_tags_dim_driver_avant_correction.png ; couverture limitée explicitée dans le README |
-| Même requête avec plusieurs rôles | 03a à 03d_acces_*.png |
-| Lignage | 04_lignage.png |
-| Graphe et succès d’exécution | 17_graphe_taches.png et 19_succes_graphe_complet.png ; tableau complet 14 |
-| Résultats qualité | 06_resultats_qualite_manuels.png, 16 et 23 pour les tâches |
-| Audit | 07_audit.png |
+## Dernières validations ouvertes
 
-Preuves supplémentaires : 08 volumes, 10 test rouge, 11 rétention, 12 purge/Time Travel, 13 propriété des tâches, 15 protections après tâches, 20/21 blocage, 22/23 rétablissement, 24 mapping, 25 stage vide, 26 rejeu des politiques. Les deux CSV du personnel et les résultats nominatifs ne sont pas publiés.
+- Recette 10_recette_complete.sql : 69 assertions, huit rôles, dont 22 refus et matrice des deux tables métier ; résultat attendu, non encore exécuté.
+- Recette 11_rejeu_chargement.sql : six assertions, deux rejeux avec stage vide ; contrôle du nouveau garde-fou, non encore exécuté.
+- Couverture complète du tag DONNEE_PERSONNELLE : écart C20 non levé, pas de catégorie adaptée pour vingt attributs sur RAW/MARTS.
+- Consultation nominative de l’audit : script fourni pour une lecture privée ; résultat nominatif non conservé dans le dépôt public.
+- Après la dernière démonstration : suspendre la racine avec rh/suspendre_taches_rh.sql. La suspension effective doit être vérifiée dans son résultat.
 
-## Avant le rendu
-
-- A14 confirmé : parcours de rejeu 03_masquage.sql puis 04_acces_depot.sql, suivi du test 06_verifier_apres_taches.sql ; capture 26, 18 OK.
-- Rejeu immédiat du chargement non attesté : ne pas recharger le fichier historique après purge uniquement pour compléter une capture. Décrire cette limite.
-- Tests complémentaires A17-A19 et consultation nominative privée de l’audit non attestés ; aucune réussite inventée.
-- Démonstration avec docs/SOUTENANCE.md. Suspendre T_PURGE après la dernière exécution terminée avec rh/suspendre_taches_rh.sql.
-- Vérifier les fichiers du dépôt public et les commits ; push à réaliser par Lucas.
-
-## Limites à exposer
-
-Identifiant et agrégats par chauffeur restent personnels. La taxonomie imposée ne couvre pas tous les attributs personnels : écart C20 signalé, masques directs appliqués là où nécessaire. Les cinq ans demandent une justification juridique par finalité ; base active et archive non distinguées. Un jour de Time Travel puis Fail-safe ne signifie pas effacement physique immédiat. TRANSFORMER possède les tables et les administrateurs peuvent modifier les règles. L’horaire quotidien est configuré mais seules des exécutions demandées manuellement ont été observées.
+Le minimum hors bonus de trois règles qualité est implémenté. Les bonus ne sont ni requis ni présentés comme réalisés.

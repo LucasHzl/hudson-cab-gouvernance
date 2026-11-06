@@ -1,0 +1,561 @@
+-- RECETTE COMPLÈTE : exécuter entier dans une feuille, sans tâche active.
+-- CAPTURE du tableau final : un résumé par rôle ; nb_echecs doit être zéro.
+-- Références calculées sous TRANSFORMER ; chiffres adaptés avant/après purge.
+-- Lecture seule : aucune modification des règles, des habilitations ou des données.
+-- Les refus sont attendus et interceptés ; toute autre erreur interrompt la recette.
+USE SECONDARY ROLES NONE;
+
+USE ROLE TRANSFORMER;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_nd = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER );
+SET r10_nm = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY );
+SET r10_df = (SELECT HASH_AGG(driver_id,first_name,last_name,email,phone,birth_date,tlc_license_number,depot,hire_date,end_date,is_active,tenure_years,birth_year) FROM NYC_TAXI.MARTS.DIM_DRIVER );
+SET r10_mf = (SELECT HASH_AGG(activity_month,driver_id,driver_name,depot,nb_shifts,hours_worked,trips_count,revenue_usd) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY );
+SET r10_da = (SELECT HASH_AGG(driver_id,depot,birth_year,is_active,tenure_years) FROM NYC_TAXI.MARTS.DIM_DRIVER );
+SET r10_ma = (SELECT HASH_AGG(activity_month,driver_id,depot,nb_shifts,hours_worked,trips_count,revenue_usd) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY );
+SET r10_qdn = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER WHERE depot='Queens');
+SET r10_qdh = (SELECT HASH_AGG(driver_id,first_name,last_name,phone,depot) FROM NYC_TAXI.MARTS.DIM_DRIVER WHERE depot='Queens');
+SET r10_qmn = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY WHERE depot='Queens');
+SET r10_qmh = (SELECT HASH_AGG(driver_id,driver_name,depot) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY WHERE depot='Queens');
+SET r10_bdn = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER WHERE depot='Bronx');
+SET r10_bdh = (SELECT HASH_AGG(driver_id,first_name,last_name,phone,depot) FROM NYC_TAXI.MARTS.DIM_DRIVER WHERE depot='Bronx');
+SET r10_bmn = (SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY WHERE depot='Bronx');
+SET r10_bmh = (SELECT HASH_AGG(driver_id,driver_name,depot) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY WHERE depot='Bronx');
+SET r10_tags_tables = (SELECT IFF(SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.SENSIBILITE','NYC_TAXI.RAW.DRIVERS','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.DUREE_CONSERVATION','NYC_TAXI.RAW.DRIVERS','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.SENSIBILITE','NYC_TAXI.RAW.DRIVER_SHIFTS','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.DUREE_CONSERVATION','NYC_TAXI.RAW.DRIVER_SHIFTS','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.SENSIBILITE','NYC_TAXI.MARTS.DIM_DRIVER','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.DUREE_CONSERVATION','NYC_TAXI.MARTS.DIM_DRIVER','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.SENSIBILITE','NYC_TAXI.MARTS.MART_DRIVER_MONTHLY','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.DUREE_CONSERVATION','NYC_TAXI.MARTS.MART_DRIVER_MONTHLY','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.SENSIBILITE','NYC_TAXI.MARTS.DIM_DEPOT','TABLE') IS NOT NULL
+ AND SYSTEM$GET_TAG('NYC_TAXI.GOUVERNANCE.DUREE_CONSERVATION','NYC_TAXI.MARTS.DIM_DEPOT','TABLE') IS NOT NULL,1,0));
+SET r10_desc_tables = (SELECT IFF(COUNT(*)=5 AND COALESCE(COUNT_IF(NULLIF(TRIM(comment),'') IS NULL),0)=0,1,0) FROM NYC_TAXI.INFORMATION_SCHEMA.TABLES WHERE (table_schema='RAW' AND table_name IN ('DRIVERS','DRIVER_SHIFTS')) OR (table_schema='MARTS' AND table_name IN ('DIM_DRIVER','MART_DRIVER_MONTHLY','DIM_DEPOT')));
+SET r10_non_vide = (SELECT IFF($r10_nd>0 AND $r10_nm>0 AND (SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVERS)>0 AND (SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS)>0,1,0));
+SET r10_t01 = (SELECT IFF(CURRENT_ROLE()='TRANSFORMER',1,0));
+SET r10_t02 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER d LEFT JOIN NYC_TAXI.STAGING.STG_RH__DRIVERS s ON s.driver_id=d.driver_id WHERE s.driver_id IS NULL OR d.email IS DISTINCT FROM s.email);
+SET r10_t03 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER WHERE birth_year IS DISTINCT FROM YEAR(birth_date));
+SELECT COUNT(*) AS controle_existence FROM NYC_TAXI.RAW.DRIVERS;
+SELECT COUNT(*) AS controle_existence FROM NYC_TAXI.RAW.DRIVER_SHIFTS;
+SELECT COUNT(*) AS controle_existence FROM NYC_TAXI.STAGING.STG_RH__DRIVERS;
+SELECT COUNT(*) AS controle_existence FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS;
+
+USE ROLE RH_PAIE;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_t04 = (SELECT IFF(CURRENT_ROLE()='RH_PAIE',1,0));
+SET r10_t05 = (SELECT IFF(COUNT(*)=3,1,0) FROM NYC_TAXI.MARTS.DIM_DEPOT);
+SET r10_t06 = (SELECT IFF(COUNT(*)=25 AND COALESCE(COUNT_IF(NULLIF(TRIM(description),'') IS NULL),0)=0,1,0) FROM NYC_TAXI.GOUVERNANCE.V_CATALOGUE);
+SET r10_t07 = (SELECT IFF(COUNT(*)=$r10_nd AND HASH_AGG(driver_id,first_name,last_name,email,phone,birth_date,tlc_license_number,depot,hire_date,end_date,is_active,tenure_years,birth_year)=$r10_df,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t08 = (SELECT IFF(COUNT(*)=$r10_nm AND HASH_AGG(activity_month,driver_id,driver_name,depot,nb_shifts,hours_worked,trips_count,revenue_usd)=$r10_mf,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t09 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t10 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t11 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t12 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+
+USE ROLE RESP_DEPOT_QUEENS;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_t13 = (SELECT IFF(CURRENT_ROLE()='RESP_DEPOT_QUEENS',1,0));
+SET r10_t14 = (SELECT IFF(COUNT(*)=3,1,0) FROM NYC_TAXI.MARTS.DIM_DEPOT);
+SET r10_t15 = (SELECT IFF(COUNT(*)=25 AND COALESCE(COUNT_IF(NULLIF(TRIM(description),'') IS NULL),0)=0,1,0) FROM NYC_TAXI.GOUVERNANCE.V_CATALOGUE);
+SET r10_t16 = (SELECT IFF(COUNT(*)=$r10_qdn AND HASH_AGG(driver_id,first_name,last_name,phone,depot)=$r10_qdh AND COALESCE(COUNT_IF(depot<>'Queens'),0)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t17 = (SELECT IFF(COALESCE(COUNT_IF((email IS NOT NULL AND email<>'[MASQUE]') OR (tlc_license_number IS NOT NULL AND tlc_license_number<>'[MASQUE]') OR birth_date IS NOT NULL OR birth_year IS NOT NULL OR hire_date IS NOT NULL OR end_date IS NOT NULL OR is_active IS NOT NULL OR tenure_years IS NOT NULL),0)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t18 = (SELECT IFF(COUNT(*)=$r10_qmn AND HASH_AGG(driver_id,driver_name,depot)=$r10_qmh AND COALESCE(COUNT_IF(depot<>'Queens'),0)=0,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+SET r10_t19 = (SELECT IFF(COALESCE(COUNT_IF(activity_month IS NOT NULL OR nb_shifts IS NOT NULL OR hours_worked IS NOT NULL OR trips_count IS NOT NULL OR revenue_usd IS NOT NULL),0)=0,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t20 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t21 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t22 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t23 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+
+USE ROLE RESP_DEPOT_BRONX;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_t24 = (SELECT IFF(CURRENT_ROLE()='RESP_DEPOT_BRONX',1,0));
+SET r10_t25 = (SELECT IFF(COUNT(*)=3,1,0) FROM NYC_TAXI.MARTS.DIM_DEPOT);
+SET r10_t26 = (SELECT IFF(COUNT(*)=25 AND COALESCE(COUNT_IF(NULLIF(TRIM(description),'') IS NULL),0)=0,1,0) FROM NYC_TAXI.GOUVERNANCE.V_CATALOGUE);
+SET r10_t27 = (SELECT IFF(COUNT(*)=$r10_bdn AND HASH_AGG(driver_id,first_name,last_name,phone,depot)=$r10_bdh AND COALESCE(COUNT_IF(depot<>'Bronx'),0)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t28 = (SELECT IFF(COALESCE(COUNT_IF((email IS NOT NULL AND email<>'[MASQUE]') OR (tlc_license_number IS NOT NULL AND tlc_license_number<>'[MASQUE]') OR birth_date IS NOT NULL OR birth_year IS NOT NULL OR hire_date IS NOT NULL OR end_date IS NOT NULL OR is_active IS NOT NULL OR tenure_years IS NOT NULL),0)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t29 = (SELECT IFF(COUNT(*)=$r10_bmn AND HASH_AGG(driver_id,driver_name,depot)=$r10_bmh AND COALESCE(COUNT_IF(depot<>'Bronx'),0)=0,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+SET r10_t30 = (SELECT IFF(COALESCE(COUNT_IF(activity_month IS NOT NULL OR nb_shifts IS NOT NULL OR hours_worked IS NOT NULL OR trips_count IS NOT NULL OR revenue_usd IS NOT NULL),0)=0,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t31 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t32 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t33 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t34 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+
+USE ROLE ANALYSTE;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_t35 = (SELECT IFF(CURRENT_ROLE()='ANALYSTE',1,0));
+SET r10_t36 = (SELECT IFF(COUNT(*)=3,1,0) FROM NYC_TAXI.MARTS.DIM_DEPOT);
+SET r10_t37 = (SELECT IFF(COUNT(*)=25 AND COALESCE(COUNT_IF(NULLIF(TRIM(description),'') IS NULL),0)=0,1,0) FROM NYC_TAXI.GOUVERNANCE.V_CATALOGUE);
+SET r10_t38 = (SELECT IFF(COUNT(*)=$r10_nd AND HASH_AGG(driver_id,depot,birth_year,is_active,tenure_years)=$r10_da,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t39 = (SELECT IFF(COALESCE(COUNT_IF((first_name IS NOT NULL AND first_name<>'[MASQUE]') OR (last_name IS NOT NULL AND last_name<>'[MASQUE]') OR (email IS NOT NULL AND email<>'[MASQUE]') OR (phone IS NOT NULL AND phone<>'[MASQUE]') OR (tlc_license_number IS NOT NULL AND tlc_license_number<>'[MASQUE]') OR birth_date IS NOT NULL OR hire_date IS NOT NULL OR end_date IS NOT NULL),0)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t40 = (SELECT IFF(COUNT(*)=$r10_nm AND HASH_AGG(activity_month,driver_id,depot,nb_shifts,hours_worked,trips_count,revenue_usd)=$r10_ma,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+SET r10_t41 = (SELECT IFF(COALESCE(COUNT_IF(driver_name IS NOT NULL AND driver_name<>'[MASQUE]'),0)=0,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t42 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t43 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t44 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t45 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+
+USE ROLE ACCOUNTADMIN;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_t46 = (SELECT IFF(CURRENT_ROLE()='ACCOUNTADMIN',1,0));
+SET r10_t47 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t48 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+SET r10_t49 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.RAW.DRIVERS);
+SET r10_t50 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.RAW.DRIVER_SHIFTS);
+SET r10_t51 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.STAGING.STG_RH__DRIVERS);
+SET r10_t52 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS);
+
+USE ROLE SYSADMIN;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_t53 = (SELECT IFF(CURRENT_ROLE()='SYSADMIN',1,0));
+SET r10_t54 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.MARTS.DIM_DRIVER);
+SET r10_t55 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY);
+SET r10_t56 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.RAW.DRIVERS);
+SET r10_t57 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.RAW.DRIVER_SHIFTS);
+SET r10_t58 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.STAGING.STG_RH__DRIVERS);
+SET r10_t59 = (SELECT IFF(COUNT(*)=0,1,0) FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS);
+
+USE ROLE GOUVERNANCE;
+USE WAREHOUSE NYC_TAXI_WH;
+SET r10_t60 = (SELECT IFF(CURRENT_ROLE()='GOUVERNANCE',1,0));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t61 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.MARTS.MART_DRIVER_MONTHLY';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t62 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t63 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t64 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVERS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t65 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+EXECUTE IMMEDIATE $$
+BEGIN
+ EXECUTE IMMEDIATE 'SELECT COUNT(*) FROM NYC_TAXI.STAGING.STG_RH__DRIVER_SHIFTS';
+ RETURN 0;
+EXCEPTION WHEN STATEMENT_ERROR THEN
+ IF (SQLSTATE='42501' OR CONTAINS(LOWER(SQLERRM),'not authorized')
+     OR CONTAINS(LOWER(SQLERRM),'insufficient privileges')) THEN
+  RETURN 1;
+ ELSE
+  RAISE;
+ END IF;
+END;
+$$;
+SET r10_t66 = (SELECT $1 FROM TABLE(RESULT_SCAN(LAST_QUERY_ID())));
+
+USE ROLE TRANSFORMER;
+USE WAREHOUSE NYC_TAXI_WH;
+WITH controles AS (
+SELECT 'TRANSFORMER' AS role_teste, 'tags_tables_presence' AS controle, $r10_tags_tables AS conforme
+UNION ALL
+SELECT 'TRANSFORMER' AS role_teste, 'descriptions_tables_presence' AS controle, $r10_desc_tables AS conforme
+UNION ALL
+SELECT 'TRANSFORMER' AS role_teste, 'sources_non_vides' AS controle, $r10_non_vide AS conforme
+UNION ALL
+SELECT 'TRANSFORMER' AS role_teste, 'role_actif' AS controle, $r10_t01 AS conforme
+UNION ALL
+SELECT 'TRANSFORMER' AS role_teste, 'fidelite_emails' AS controle, $r10_t02 AS conforme
+UNION ALL
+SELECT 'TRANSFORMER' AS role_teste, 'birth_year_coherent' AS controle, $r10_t03 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'role_actif' AS controle, $r10_t04 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'referentiel_depots' AS controle, $r10_t05 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'catalogue_accessible' AS controle, $r10_t06 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'dimension_complete_en_clair' AS controle, $r10_t07 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'mensuel_complet_en_clair' AS controle, $r10_t08 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'refus_raw.drivers' AS controle, $r10_t09 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'refus_raw.driver_shifts' AS controle, $r10_t10 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'refus_staging.stg_rh__drivers' AS controle, $r10_t11 AS conforme
+UNION ALL
+SELECT 'RH_PAIE' AS role_teste, 'refus_staging.stg_rh__driver_shifts' AS controle, $r10_t12 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'role_actif' AS controle, $r10_t13 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'referentiel_depots' AS controle, $r10_t14 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'catalogue_accessible' AS controle, $r10_t15 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'dimension_perimetre_et_valeurs' AS controle, $r10_t16 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'dimension_attributs_masques' AS controle, $r10_t17 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'mensuel_perimetre_et_identite' AS controle, $r10_t18 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'mensuel_mesures_masquees' AS controle, $r10_t19 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'refus_raw.drivers' AS controle, $r10_t20 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'refus_raw.driver_shifts' AS controle, $r10_t21 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'refus_staging.stg_rh__drivers' AS controle, $r10_t22 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_QUEENS' AS role_teste, 'refus_staging.stg_rh__driver_shifts' AS controle, $r10_t23 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'role_actif' AS controle, $r10_t24 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'referentiel_depots' AS controle, $r10_t25 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'catalogue_accessible' AS controle, $r10_t26 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'dimension_perimetre_et_valeurs' AS controle, $r10_t27 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'dimension_attributs_masques' AS controle, $r10_t28 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'mensuel_perimetre_et_identite' AS controle, $r10_t29 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'mensuel_mesures_masquees' AS controle, $r10_t30 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'refus_raw.drivers' AS controle, $r10_t31 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'refus_raw.driver_shifts' AS controle, $r10_t32 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'refus_staging.stg_rh__drivers' AS controle, $r10_t33 AS conforme
+UNION ALL
+SELECT 'RESP_DEPOT_BRONX' AS role_teste, 'refus_staging.stg_rh__driver_shifts' AS controle, $r10_t34 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'role_actif' AS controle, $r10_t35 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'referentiel_depots' AS controle, $r10_t36 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'catalogue_accessible' AS controle, $r10_t37 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'dimension_attributs_autorises' AS controle, $r10_t38 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'dimension_identite_et_dates_masquees' AS controle, $r10_t39 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'mensuel_mesures_autorisees' AS controle, $r10_t40 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'mensuel_nom_masque' AS controle, $r10_t41 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'refus_raw.drivers' AS controle, $r10_t42 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'refus_raw.driver_shifts' AS controle, $r10_t43 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'refus_staging.stg_rh__drivers' AS controle, $r10_t44 AS conforme
+UNION ALL
+SELECT 'ANALYSTE' AS role_teste, 'refus_staging.stg_rh__driver_shifts' AS controle, $r10_t45 AS conforme
+UNION ALL
+SELECT 'ACCOUNTADMIN' AS role_teste, 'role_actif' AS controle, $r10_t46 AS conforme
+UNION ALL
+SELECT 'ACCOUNTADMIN' AS role_teste, 'aucune_ligne_marts.dim_driver' AS controle, $r10_t47 AS conforme
+UNION ALL
+SELECT 'ACCOUNTADMIN' AS role_teste, 'aucune_ligne_marts.mart_driver_monthly' AS controle, $r10_t48 AS conforme
+UNION ALL
+SELECT 'ACCOUNTADMIN' AS role_teste, 'aucune_ligne_raw.drivers' AS controle, $r10_t49 AS conforme
+UNION ALL
+SELECT 'ACCOUNTADMIN' AS role_teste, 'aucune_ligne_raw.driver_shifts' AS controle, $r10_t50 AS conforme
+UNION ALL
+SELECT 'ACCOUNTADMIN' AS role_teste, 'aucune_ligne_staging.stg_rh__drivers' AS controle, $r10_t51 AS conforme
+UNION ALL
+SELECT 'ACCOUNTADMIN' AS role_teste, 'aucune_ligne_staging.stg_rh__driver_shifts' AS controle, $r10_t52 AS conforme
+UNION ALL
+SELECT 'SYSADMIN' AS role_teste, 'role_actif' AS controle, $r10_t53 AS conforme
+UNION ALL
+SELECT 'SYSADMIN' AS role_teste, 'aucune_ligne_marts.dim_driver' AS controle, $r10_t54 AS conforme
+UNION ALL
+SELECT 'SYSADMIN' AS role_teste, 'aucune_ligne_marts.mart_driver_monthly' AS controle, $r10_t55 AS conforme
+UNION ALL
+SELECT 'SYSADMIN' AS role_teste, 'aucune_ligne_raw.drivers' AS controle, $r10_t56 AS conforme
+UNION ALL
+SELECT 'SYSADMIN' AS role_teste, 'aucune_ligne_raw.driver_shifts' AS controle, $r10_t57 AS conforme
+UNION ALL
+SELECT 'SYSADMIN' AS role_teste, 'aucune_ligne_staging.stg_rh__drivers' AS controle, $r10_t58 AS conforme
+UNION ALL
+SELECT 'SYSADMIN' AS role_teste, 'aucune_ligne_staging.stg_rh__driver_shifts' AS controle, $r10_t59 AS conforme
+UNION ALL
+SELECT 'GOUVERNANCE' AS role_teste, 'role_actif' AS controle, $r10_t60 AS conforme
+UNION ALL
+SELECT 'GOUVERNANCE' AS role_teste, 'refus_marts.dim_driver' AS controle, $r10_t61 AS conforme
+UNION ALL
+SELECT 'GOUVERNANCE' AS role_teste, 'refus_marts.mart_driver_monthly' AS controle, $r10_t62 AS conforme
+UNION ALL
+SELECT 'GOUVERNANCE' AS role_teste, 'refus_raw.drivers' AS controle, $r10_t63 AS conforme
+UNION ALL
+SELECT 'GOUVERNANCE' AS role_teste, 'refus_raw.driver_shifts' AS controle, $r10_t64 AS conforme
+UNION ALL
+SELECT 'GOUVERNANCE' AS role_teste, 'refus_staging.stg_rh__drivers' AS controle, $r10_t65 AS conforme
+UNION ALL
+SELECT 'GOUVERNANCE' AS role_teste, 'refus_staging.stg_rh__driver_shifts' AS controle, $r10_t66 AS conforme
+)
+SELECT role_teste,COUNT(*) AS nb_controles,
+       COALESCE(COUNT_IF(conforme=1),0) AS nb_ok,
+       COALESCE(COUNT_IF(conforme IS NULL OR conforme<>1),0) AS nb_echecs,
+       LISTAGG(IFF(conforme IS NULL OR conforme<>1,controle,NULL),', ')
+         WITHIN GROUP (ORDER BY controle) AS controles_en_echec,
+       IFF(COALESCE(COUNT_IF(conforme IS NULL OR conforme<>1),0)=0,'OK','ECHEC') AS statut
+FROM controles GROUP BY role_teste ORDER BY role_teste;

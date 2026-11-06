@@ -1,150 +1,116 @@
-# Hudson Cab — Gouvernance des données RH dans Snowflake
+# Hudson Cab — Gouvernance RH dans Snowflake
 
-Projet pédagogique : catalogue, accès, conservation, qualité et audit des données de chauffeurs fictifs. Référence : `CONTRAT_GOUVERNANCE.md`. Les exigences sont confrontées aux textes dans `docs/VEILLE.md`.
+Dépôt : [LucasHzl/hudson-cab-gouvernance](https://github.com/LucasHzl/hudson-cab-gouvernance).
 
-## État du projet
+Entrepôt pédagogique sur Snowflake Enterprise, AWS Paris : catalogue, accès par rôle et dépôt, conservation, qualité, tâches et audit. Références : [brief](BRIEF.md), [contrat](CONTRAT_GOUVERNANCE.md), [guide](GUIDE_BRIEF_GOUVERNANCE.md).
 
-Implémentation principale exécutée au 6 novembre 2026 : catalogue, accès, purge, qualité, tâches, audit et lignage. Captures conservées dans `docs/` ; 18 contrôles après tâches verts et blocage qualité prouvé, puis seuil normal rétabli. Compte Enterprise AWS Paris ; exécutions réalisées par Lucas, sans connexion directe de l’assistant à Snowflake.
+## État et preuves
 
-Mapping et stage vide désormais prouvés. Rejeu des politiques validé par les 18 contrôles de la capture 26. Le rejeu immédiat du chargement reste non formellement prouvé. Limite persistante : toutes les données personnelles sont inventoriées, mais les valeurs de tags imposées ne couvrent pas toutes leurs catégories ; l’écart est documenté, C20 n’est pas intégralement validé. Voir `docs/SUIVI.md`.
+Au 6 novembre 2026 : pipeline chargé, accès et mapping testés, purge 400 → 354, rétention un jour, chaîne quotidienne réussie, blocage qualité puis rétablissement prouvés, audit et lignage capturés. Dix-huit contrôles sont verts après reconstruction et après rejeu des politiques.
+
+Le contrôle critère par critère est dans [CONTROLE_RENDU.md](docs/CONTROLE_RENDU.md). Deux recettes renforcées restent à exécuter : 69 assertions d’accès sur huit rôles et six assertions de rejeu du chargement. L’écart de couverture du tag DONNEE_PERSONNELLE n’est pas levé : le critère C20 correspondant n’est pas intégralement satisfait. Les bonus ne font pas partie du périmètre.
 
 ## Gouvernance
 
-### Protection du dépôt public
+### Ce qui est protégé
 
-Les deux CSV RH restent locaux et sont exclus par `.gitignore`, même s’ils sont fictifs : le projet reproduit les précautions d’un traitement réel de données du personnel. Aucun secret ni donnée personnelle ne doit être publié, y compris dans les résultats de tests et captures. Vérifier les fichiers avant chaque commit. `.venv/` est exclu ; `pyproject.toml` et `uv.lock` peuvent être versionnés. Python et uv ne sont pas nécessaires pour exécuter le kit dans Snowsight.
+Les dix colonnes RH, les huit colonnes des services et leurs dérivations sont personnelles dans leur contexte, y compris les attributs professionnels et les agrégats par chauffeur. Inventaire et registre : [REGISTRE.md](docs/REGISTRE.md). DIM_DEPOT est un référentiel sans données personnelles.
 
-### Principes et choix établis
+- RH_PAIE : tous les dépôts, données en clair.
+- Responsables : leur dépôt seulement, identité et téléphone en clair ; autres attributs masqués, hors driver_id et clé depot.
+- ANALYSTE : tous les dépôts, identité/coordonnées/licence masquées, année de naissance seule ; mesures d’activité utilisables.
+- TRANSFORMER : lecture nécessaire en clair pour charger, contrôler, purger et reconstruire.
+- GOUVERNANCE : règles et métadonnées, pas de SELECT sur le personnel.
+- ACCOUNTADMIN et SYSADMIN : zéro ligne personnelle avec le mapping actuel. Leurs pouvoirs de reconfiguration restent une limite.
 
-- `TRANSFORMER` porte le chargement et le pipeline, avec les droits nécessaires à ses opérations.
-- Dans le scénario, Hudson Cab Europe décide du traitement. Le droit applicable et les sources figurent dans `docs/VEILLE.md`, section 1.
-- Les fichiers SQL sont conservés dans le dépôt et exécutés dans Snowsight. Toute modification durable doit se retrouver dans un script rejouable.
-- Les 18 colonnes sources et leurs dérivations sont inventoriées dans `docs/REGISTRE.md`. Accès, masquage, filtrage, purge et conservation sont implémentés ; les écarts et limites figurent ci-dessous.
+La politique de lignes utilise CURRENT_ROLE et ACCES_DEPOT ; le lecteur n’a pas besoin de lire le mapping. Les rôles secondaires sont désactivés dans les tests. Masques par tag pour les catégories disponibles, masques directs pour les attributs sans catégorie adaptée. Les dates, nombres et booléens masqués deviennent NULL ; les textes deviennent [MASQUE] en conservant les NULL sources. Matrice et carte des privilèges : [ACCES.md](docs/ACCES.md).
 
-### Ordre d’exécution
+### Installation depuis un compte vide
 
-1. `snowflake/00_installation.sql`, avec `ACCOUNTADMIN` : warehouse, base, schémas et rôle `TRANSFORMER`. Exécution réussie rapportée par l’étudiant.
-2. Avant chargement : relire la veille et l’inventaire, vérifier la preuve d’inscription CNIL dans `docs/01_abonnement_veille.png`, compléter les suivis de veille et vérifier les exclusions Git.
-3. `snowflake/rh/chargement_rh_1_preparer.sql`, avec `TRANSFORMER` : créer format CSV, stage et tables RAW.
-4. Déposer localement les deux fichiers CSV dans `NYC_TAXI.RAW.RH_STAGE` via Snowsight ; vérifier leur présence avec `LIST @NYC_TAXI.RAW.RH_STAGE;`.
-5. `snowflake/rh/chargement_rh_2_copier.sql`, avec `TRANSFORMER` : charger puis retirer les fichiers du stage. Comptages 400 chauffeurs et 25 951 services confirmés par l’étudiant le 6 novembre 2026 ; capture non reçue. Stage vide confirmé par la capture 25 ; test de rejouabilité immédiate du chargement non formellement consigné.
-6. `snowflake/rh/00_tables_rh.sql`, puis `snowflake/rh/staging/stg_rh__drivers.sql`, `snowflake/rh/staging/stg_rh__driver_shifts.sql`, `snowflake/rh/marts/dim_depot.sql`, `snowflake/rh/marts/dim_driver.sql` et `snowflake/rh/marts/mart_driver_monthly.sql`. Volumétrie avant purge vérifiée sur capture le 6 novembre 2026 : 25 933 services dans STAGING ; 3 dépôts, 400 chauffeurs et 914 lignes mensuelles dans MARTS. Preuve : `docs/08_volumes_initialisation.png`.
-7. `snowflake/gouvernance/01_gouvernance.sql` : démarre avec ACCOUNTADMIN puis passe à GOUVERNANCE ; crée le rôle, le schéma, les trois tags, QUALITE_RESULTATS et les droits utiles à TRANSFORMER. Exécution réussie et trois tags confirmés par l’étudiant le 6 novembre 2026 ; absence de SELECT RH à tester séparément.
-8. `snowflake/rh/01_annee_naissance.sql`, avec TRANSFORMER : migration rejouable de la table existante, description et tag de birth_year. À faire avant de rejouer la fiche complète DIM_DRIVER sur un ancien schéma. Exécution réussie déclarée par Lucas le 6 novembre 2026 ; contrôle agrégé correct selon son retour.
-9. Avec TRANSFORMER, exécuter dans `snowflake/rh/catalogue/` : `catalogue_dim_depot.sql`, `catalogue_raw_drivers.sql`, `catalogue_raw_driver_shifts.sql`, `catalogue_dim_driver.sql`, `catalogue_mart_driver_monthly.sql`, puis `vue_catalogue.sql` et `verifier_catalogue.sql`. État initial à 24 colonnes métier vérifié sur export ; état étendu après migration attendu : 47 colonnes décrites sur cinq tables et 25 lignes dans V_CATALOGUE. La vue porte sur MARTS uniquement.
-10. `snowflake/gouvernance/02_roles_metier.sql` : préparation des quatre rôles pour le compte pédagogique ; exécution réussie déclarée par Lucas le 6 novembre 2026. Cahier des résultats attendus déjà écrit dans `docs/ACCES.md`, SQL de tests dans `snowflake/gouvernance/tests/01_tests_acces.sql`.
-11. `snowflake/gouvernance/03_masquage.sql`, puis `04_acces_depot.sql`, avec GOUVERNANCE ; exécution réussie confirmée et démo de quatre rôles vérifiée sur captures. Rejouer ensuite les blocs de `tests/01_tests_acces.sql` et la démonstration `tests/03_demo_quatre_roles.sql`.
-12. `snowflake/rh/conservation_rh.sql` (quatre rétentions à un jour), puis `snowflake/gouvernance/tests/05_preuve_purge.sql` pour la première purge avec preuve avant/après et Time Travel. Le second contient le même bloc que `snowflake/rh/purge_rh.sql` ; ne pas lancer ce dernier avant la première démonstration. Rétention et première preuve de purge vérifiées sur captures le 6 novembre 2026 : 354 chauffeurs courants, 400 historiques, zéro copie expirée.
-13. `snowflake/rh/qualite_rh.sql`, avec TRANSFORMER : trois règles, journalisation durable puis blocage si service_rattache dépasse 50. Trois mesures vérifiées sur capture : 7 emails, 4 licences, 25 services orphelins, statuts attendus. Les requêtes scalaires sont documentées dans `rh/controles/`.
-14. `snowflake/rh/taches_rh.sql`, avec TRANSFORMER : crée/modifie la chaîne suspendue. Puis `lancer_taches_rh.sql` pour l’activer et demander un lancement ; `suivi_taches_rh.sql` pour lire le résultat du même lancement. Première exécution complète réussie le 6 novembre 2026, captures 13 et 14 : propriétaire TRANSFORMER, trois SUCCEEDED dans le même groupe. Départ automatique à 05:00 non encore observé.
-15. `snowflake/gouvernance/tests/06_verifier_apres_taches.sql` contrôle les protections, descriptions, rétention, valeurs et accès ; `consulter_qualite.sql` lit les dernières mesures sans en créer.
-16. Démontrer le blocage avec `snowflake/gouvernance/tests/07_preparer_blocage.sql`, puis `rh/lancer_taches_rh.sql`, `rh/suivi_taches_rh.sql` et `rh/consulter_qualite.sql`. Capturer avant restauration ; rétablir le seuil avec `tests/08_retablir_seuil.sql`, relancer et vérifier. Blocage et retour à 50 prouvés sur captures 20 à 23.
-17. `snowflake/gouvernance/06_audit.sql`, avec ACCOUNTADMIN : audit public par rôle exécuté, capture 07. `06b_audit_detail_prive.sql` fournit les comptes, à consulter uniquement en privé. Fenêtre de sept jours, délai possible de trois heures.
-18. Sous TRANSFORMER, ouvrir MART_DRIVER_MONTHLY → Lineage : capture 04 conservée. Tester le mapping avec `tests/02_test_mapping.sql` (références dynamiques avant/après purge) et le stage vide avec `tests/09_stage_vide.sql` ; preuves 24 (trois étapes OK) et 25 (zéro fichier) conservées.
-19. Après la démonstration, `snowflake/rh/suspendre_taches_rh.sql` arrête les prochains départs automatiques. Aucun push réalisé par l’assistant.
+Prérequis : Snowflake Enterprise, fichiers drivers.csv et driver_shifts.csv disponibles localement depuis le [kit officiel](https://github.com/gsoulat/formation-data-IA/tree/main/99-Brief/Data-Engineer/Snowflake/Snowflake%2BGouvernance/starter-kit/data). Les données sources ne sont pas livrées dans ce dépôt public. Exécuter les fichiers entiers, sans remplacer les rôles indiqués par ACCOUNTADMIN. Python/uv ne sont pas nécessaires au pipeline SQL.
 
-### Comprendre le chargement
+| Étape | Fichiers / opération | Rôle et résultat |
+|---|---|---|
+| 1 | snowflake/00_installation.sql | ACCOUNTADMIN crée NYC_TAXI, NYC_TAXI_WH et TRANSFORMER |
+| 2 | Lire docs/VEILLE.md et docs/REGISTRE.md | Droit applicable, données et écarts identifiés avant politiques |
+| 3 | snowflake/rh/chargement_rh_1_preparer.sql | TRANSFORMER : format CSV, stage, tables RAW |
+| 4 | Déposer les deux CSV dans NYC_TAXI.RAW.RH_STAGE via Snowsight | Seule opération de dépôt de fichiers ; ne pas publier les CSV |
+| 5 | snowflake/rh/chargement_rh_2_copier.sql | TRANSFORMER : 400 chauffeurs, 25 951 services initialement, stage vide |
+| 6 | snowflake/rh/00_tables_rh.sql ; staging/stg_rh__drivers.sql ; staging/stg_rh__driver_shifts.sql | Chemins staging/ relatifs à snowflake/rh/ ; tables et vues typées |
+| 7 | Dans snowflake/rh/marts/ : dim_depot.sql, dim_driver.sql, mart_driver_monthly.sql | TRANSFORMER : 3 dépôts, 400 chauffeurs, 914 lignes mensuelles ; STAGING services 25 933 |
+| 8 | snowflake/gouvernance/01_gouvernance.sql | ACCOUNTADMIN puis GOUVERNANCE : schéma, trois tags, table qualité et droits |
+| 9 | snowflake/rh/01_annee_naissance.sql | Migration rejouable birth_year pour un ancien schéma ; déjà présente sur une installation neuve |
+| 10 | Dans snowflake/rh/catalogue/ : catalogue_dim_depot.sql, catalogue_raw_drivers.sql, catalogue_raw_driver_shifts.sql, catalogue_dim_driver.sql, catalogue_mart_driver_monthly.sql ; puis vue_catalogue.sql, verifier_catalogue.sql | TRANSFORMER : descriptions des cinq tables et 47 colonnes, tags ; catalogue métier de 25 colonnes |
+| 11 | snowflake/gouvernance/02_roles_metier.sql | Crée les quatre rôles et leurs droits sur le compte de test ; ne pas distribuer les accès à d’autres comptes avant validation |
+| 12 | Tests d’accès attendus dans docs/ACCES.md ; tests/01_tests_acces.sql et tests/03_demo_quatre_roles.sql | Chemins tests/ relatifs à snowflake/gouvernance/ ; observer le test rouge avant politiques, sans publier de valeurs personnelles |
+| 13 | snowflake/gouvernance/03_masquage.sql puis 04_acces_depot.sql | GOUVERNANCE : masques, mapping et filtre sur les quatre tables personnelles |
+| 14 | tests/01_tests_acces.sql, blocs séparés selon le rôle | Références initiales avant purge ; les refus attendus sont des résultats de test |
+| 15 | snowflake/rh/conservation_rh.sql puis tests/05_preuve_purge.sql | TRANSFORMER : quatre rétentions à un jour, première preuve avant/après ; ne pas lancer purge_rh.sql avant cette première preuve |
+| 16 | snowflake/rh/qualite_rh.sql | Trois règles enregistrées, puis erreur si service_rattache dépasse 50 |
+| 17 | snowflake/rh/taches_rh.sql, puis lancer_taches_rh.sql une fois ; suivi_taches_rh.sql pour consulter | TRANSFORMER : création suspendue, activation, chaîne purge → qualité → reconstruction ; attendre trois SUCCEEDED |
+| 18 | tests/06_verifier_apres_taches.sql et snowflake/rh/consulter_qualite.sql | Dix-huit contrôles, dont masques/filtres des quatre tables et descriptions conservées |
+| 19 | tests/07_preparer_blocage.sql ; rh/lancer_taches_rh.sql, rh/suivi_taches_rh.sql et rh/consulter_qualite.sql | Chemins rh/ relatifs à snowflake/ ; seuil temporaire 0 : qualité FAILED, reconstruction non démarrée, résultats conservés |
+| 20 | tests/08_retablir_seuil.sql puis mêmes scripts de lancement/suivi/qualité | Seuil normal 50 rétabli, nouvelle chaîne réussie ; ne pas laisser le seuil de test actif |
+| 21 | snowflake/gouvernance/06_audit.sql | ACCOUNTADMIN : audit agrégé public sur sept jours ; complément nominatif 06b_audit_detail_prive.sql uniquement en privé |
+| 22 | MART_DRIVER_MONTHLY → Lineage dans Snowsight, sous TRANSFORMER | Sources DIM_DRIVER et STAGING services ; capture 04 |
+| 23 | tests/02_test_mapping.sql, tests/09_stage_vide.sql | Références dynamiques avant/après purge, extension temporaire puis restauration ; stage zéro fichier |
+| 24 | Rejouer 03_masquage.sql et 04_acces_depot.sql, puis tests/06_verifier_apres_taches.sql | Dix-huit contrôles verts après rejeu des règles, capture 26 |
+| 25 | tests/10_recette_complete.sql puis tests/11_rejeu_chargement.sql | Recettes finales dynamiques : 69 assertions sur huit rôles, puis deux rejeux de chargement et six assertions |
+| 26 | snowflake/rh/suspendre_taches_rh.sql après la dernière exécution terminée | Suspend les prochains départs quotidiens sans supprimer les objets |
 
-- Le format `CSV_RH` définit la lecture des fichiers : CSV, en-tête ignoré et guillemets reconnus. Il ne contient pas les données.
-- Le stage `RH_STAGE` stocke temporairement les fichiers ; ce n’est pas une table de lignes SQL.
-- `COPY INTO` lit les colonnes du fichier, convertit les types et remplit RAW. Les colonnes `_source_file` et `_loaded_at` conservent la provenance et le moment du chargement.
-- `ON_ERROR = ABORT_STATEMENT` arrête la commande COPY concernée si une erreur de chargement est détectée ; les deux COPY ne constituent pas à eux seuls une opération globale atomique.
-- `PURGE = TRUE` demande le retrait des fichiers chargés avec succès. Vérifier le stage avec LIST : zéro ligne est attendu et ne signifie pas un échec.
-- La rejouabilité immédiate doit être vérifiée par une seconde exécution et des comptages inchangés. Ne pas ajouter `FORCE = TRUE`, qui contournerait la protection contre le rechargement des fichiers connus. Ne pas confondre cette protection avec une déduplication métier permanente.
-- Les vues STAGING nettoient et dédoublonnent ; les scripts MARTS utilisent `INSERT OVERWRITE` pour remplir les tables existantes sans les recréer. Les protections sont conservées après reconstruction : capture 15, 18 contrôles OK.
+Ne pas relancer le chargement initial ou les références à 400 pour « réparer » un résultat après purge. Les tests 02, 06, 10 et 11 s’adaptent à l’état courant. Le test Time Travel enregistre un nouvel instant à chaque rejeu : la première capture à 400 reste la preuve de la purge initiale.
 
-### Écarts au contrat et limites connues
+### Chargement et rejouabilité
 
-Confrontation règle par règle dans `docs/VEILLE.md`. Écart de couverture du catalogue : les six valeurs permises de `DONNEE_PERSONNELLE` ne couvrent pas explicitement toutes les données personnelles inventoriées : affectation, dates professionnelles, activité et certains attributs calculés. Les agrégats par chauffeur restent personnels. Décision : conserver la taxonomie imposée et consigner cette incompatibilité ; aucune extension de valeurs n’est retenue. La durée uniforme de cinq ans demande une justification par finalité et obligations applicables : point à examiner, pas conclusion de conformité. Les résultats de tests, abonnements et captures ne seront validés qu’après réalisation effective.
+CSV_RH règle le séparateur, les guillemets, l’en-tête et les valeurs vides. RH_STAGE reçoit temporairement les fichiers. COPY INTO associe les champs aux colonnes et enregistre le nom du fichier et l’heure d’ingestion ; ON_ERROR=ABORT_STATEMENT refuse la commande fautive. PURGE=TRUE retire les fichiers chargés avec succès. Les deux COPY ne constituent pas une transaction globale atomique.
 
-### Écarts de conservation identifiés
+Le chargement conserve les deux COPY du kit, sans FORCE. Un contrôle LIST préalable fait du stage vide un rejeu explicite sans écriture ; si des fichiers sont présents, le suivi natif de COPY reste applicable. La recette 11 vérifie deux rejeux avec stage vide et compare les volumes et empreintes des RAW, sans publier ces empreintes. Le suivi des fichiers n’est pas une déduplication métier ni une stratégie de rapprochement d’un nouveau fichier complet.
 
-- **Durée de cinq ans non justifiée par catégorie** : le contrat fixe un délai uniforme sans fournir sa base par finalité. Les durées RH françaises ne se transposent pas automatiquement aux chauffeurs sous contrats new-yorkais. Le référentiel CNIL publié le 2 avril 2026 précise son périmètre français. Sources et analyse dans `docs/VEILLE.md`, fiches 2 à 4.
-- **Base active et archivage intermédiaire non distingués** : conserver pour un litige ou une obligation peut justifier certains éléments, avec accès restreint, plutôt que l’intégralité du dossier dans les usages courants. Proposition à soumettre au DPO ; matrice du brief maintenue pour les tests, aucune modification silencieuse.
-- **Time Travel ne couvre pas toute la rétention technique** : sur les tables permanentes, sept jours de Fail-safe suivent Time Travel ; limiter ce dernier à un jour ne signifie pas destruction physique au lendemain de la purge. Documentation Snowflake citée dans la veille.
-- **Limites complémentaires** : identifiant interne et agrégats par chauffeur restent personnels ; seuils qualité et droits de la paie demandent justification, pas simple assimilation à une conformité juridique. Comparaison détaillée, incluant les huit règles qualité, dans la veille.
+STAGING nettoie et dédoublonne sans réécrire RAW. Les trois INSERT OVERWRITE reconstruisent les contenus de MARTS sans recréer les tables : protections, tags, descriptions et privilèges survivent. Les politiques utilisent CREATE IF NOT EXISTS puis ALTER ; les attaches et le mapping sont rejouables. Rejouer le catalogue avec ses fiches après une évolution du schéma.
 
-## Livrables
+### Conservation et qualité
 
-- `docs/VEILLE.md` : droit applicable, dispositif, cinq fiches et confrontation du contrat.
-- `docs/REGISTRE.md` : inventaire, copies des données et registre du traitement.
-- `docs/ACCES.md` : droits et tests, attendu avant politique puis obtenu après exécution.
-- `docs/SUIVI.md` : avancement et liste des preuves visuelles.
-- `snowflake/gouvernance/` et `snowflake/rh/` : scripts du kit et scripts du projet.
+R1 : end_date strictement antérieure à DATEADD(year,-5,CURRENT_DATE()). Le bloc transactionnel supprime les copies mensuelles, la dimension, les services RAW puis DRIVERS. STAGING reflète RAW ; DIM_DEPOT reste intact. Au 6 novembre 2026, 46 chauffeurs sont expirés : 354 restants ; aucun service ne leur est rattaché dans le jeu, donc 25 951 services et 914 lignes mensuelles restent. Les 25 orphelins préexistants relèvent de la qualité.
 
-## Preuves visuelles
+R2 : DATA_RETENTION_TIME_IN_DAYS=1 sur les quatre tables permanentes ; R3 : stage vide. Le tag DUREE_CONSERVATION documente la durée, il ne purge rien. Une tâche quotidienne peut laisser jusqu’à environ 24 heures avant son prochain passage. Un jour de Time Travel est suivi de sept jours de Fail-safe sur ces tables ; cela ne prouve pas un effacement physique immédiat ni la suppression des copies externes.
 
-- [Inscription à la lettre CNIL enregistrée](docs/01_abonnement_veille.png), capture fournie et vérifiée le 6 novembre 2026. Référencée dans la note de veille. Toutes les catégories de preuves demandées sont désormais conservées ; index dans `docs/SUIVI.md`.
+| Contrôle sur RAW | Mesure | Seuil | Gravité / comportement |
+|---|---|---|---|
+| licence_unique | COUNT(*)−COUNT(DISTINCT licence), règle fournie | 0 | Avertissement ; 4 anomalies observées |
+| email_valide | Email NULL ou sans @ | 0 | Avertissement ; 7 anomalies observées |
+| service_rattache | Service sans chauffeur connu, NOT EXISTS | 50 | Bloquant au-delà ; 25 observés, OK au seuil normal |
 
-- [Volumes initiaux STAGING et MARTS](docs/08_volumes_initialisation.png), capture vérifiée le 6 novembre 2026 : 25 933, 3, 400 et 914 lignes.
+licence_unique compte aussi les NULL si présents ; email_valide ne vérifie ni délivrabilité ni identité. Les trois mesures sont committées avant toute erreur bloquante. Les avertissements continuent la chaîne ; le blocage empêche T_TABLES. Les cinq autres règles proposées au contrat ne sont pas nécessaires au minimum de trois implémenté.
 
-### État de la couverture du catalogue
+Les tâches sont détenues par TRANSFORMER, sur NYC_TAXI_WH. La racine est prévue chaque jour à 05:00 Europe/Paris ; les enfants utilisent AFTER. Les lancements observés sont manuels : le départ automatique à l’horaire n’a pas été observé. Modifier le graphe hors exécution active, après suspension de la racine. Le suivi rassemble le même graph_run_group_id et la même tentative, sans mélanger les groupes.
 
-Chaque colonne des cinq tables a une description prévue, et chaque table sa sensibilité et sa durée. Les tags de nature sont posés uniquement lorsque l’une des six valeurs imposées convient. Les autres données professionnelles personnelles restent identifiées dans les descriptions et l’inventaire ; V_CATALOGUE les signale par personnelle_inventoriee et ECART_TAG_CONTRAT. Ce signalement répond à la consigne de déclarer les écarts, mais ne suffit pas à satisfaire entièrement l’exigence C20 « toutes les colonnes personnelles taguées ». Cette limite doit être présentée au formateur, sans attestation de validation anticipée. Aucun type de tag n’est inventé ni utilisé avec un sens trompeur. La vue métier et ses droits doivent encore être testés avec les futurs rôles.
+### Audit et lignage
 
-### Décision après relecture des attentes — 6 novembre 2026
+ACCESS_HISTORY fournit les objets et colonnes ; QUERY_HISTORY apporte le rôle via query_id. L’audit public groupe par rôle/type et ne contient ni compte utilisateur ni texte SQL. Le complément privé retrouve les comptes ; sa sortie ne doit pas entrer dans Git. Un objet référencé ne prouve ni ligne retournée ni valeur visible en clair. Délai possible de trois heures, donc résultat vide ne signifie pas absence de lecture.
 
-Le contrat (introduction et section 3) fixe les valeurs ; le guide (étape 0 et jour 1, étape 6) demande de signaler les écarts sans réécrire le contrat. Le brief C20 exige parallèlement un tag sur toute colonne personnelle de l’inventaire. Notre inventaire large inclut des attributs professionnels et d’activité qui ne correspondent à aucune des six valeurs de nature prévues. Ces exigences ne peuvent pas être satisfaites simultanément pour ces attributs tout en conservant le sens exact des étiquettes.
+Le lignage montre DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS vers MART_DRIVER_MONTHLY. V_CATALOGUE apparaît en aval ; cette dépendance de métadonnées ne signifie pas que les valeurs RH y sont copiées.
 
-Décision : conserver les trois tags et les six valeurs, maintenir toutes les colonnes personnelles dans l’inventaire et les descriptions, appliquer les catégories adaptées et signaler les autres comme ECART_TAG_CONTRAT. Ne pas déclarer ces colonnes non personnelles pour faire passer le contrôle ; ne pas appeler une date de contrat date_naissance ni une recette identifiant_interne. Le critère de couverture C20 reste partiellement non satisfait, explicitement expliqué. Seul le formateur peut confirmer l’acceptation pédagogique de ce constat.
+### Écarts au contrat et limites
 
-L’absence de catégorie adaptée ne dispense pas de protection : les droits, politiques par colonne si nécessaire, filtrage par dépôt, purge et audit doivent couvrir ces données selon les besoins et la matrice. Aucun accès métier n’est ouvert à ce stade. La proposition d’extension a été retirée des scripts du dépôt ; aucune extension n’a été déclarée exécutée dans Snowflake.
+1. **Couverture du tag personnel** : six valeurs imposées pour identité/coordonnées/identifiants ; pas de catégorie fidèle pour affectation, dates professionnelles et mesures. Vingt affectations manquent sur RAW/MARTS, dont onze dans la vue métier. Inventaire, descriptions, masques directs et filtres restent en place. Le critère C20 « toutes les colonnes personnelles taguées » demeure non satisfait ; modifier la taxonomie exige une décision explicite, pas une valeur trompeuse.
+2. **Cinq ans uniformes non justifiés par catégorie** : règle appliquée pour l’exercice ; base légale et durée par usage à établir. Les contrats new-yorkais ne relèvent pas automatiquement des durées RH françaises du référentiel CNIL du 2 avril 2026.
+3. **Base active et archive non distinguées** : accès aux anciens chauffeurs maintenus selon le contrat ; proposer archive restreinte et durées par finalité.
+4. **Rétention technique** : Time Travel, Fail-safe et copies annexes distincts ; pas d’essai d’effacement physique après huit jours.
+5. **Pouvoirs administratifs** : TRANSFORMER possède les tables et les administrateurs peuvent reconfigurer les règles. Les tests de lecture ne neutralisent pas ces pouvoirs.
+6. **Qualité et nouvelles livraisons** : avertissement n’est pas correction. Un nouveau snapshot complet nécessite une stratégie de remplacement/rapprochement, validation et purge avant réexposition ; non implémentée par les deux COPY seuls.
 
-Sources du choix : `CONTRAT_GOUVERNANCE.md` introduction et §3 ; `GUIDE_BRIEF_GOUVERNANCE.md` étape 0, jour 1 étapes 6 et 11 ; `BRIEF.md` C20 ; `docs/VEILLE_MODELE.md` §4. Les transformations SQL sont modifiables ; cela ne donne pas autorisation de réécrire les valeurs imposées du contrat.
+La confrontation de chaque règle aux textes figure dans [VEILLE.md](docs/VEILLE.md), notamment les huit contrôles qualité, rôles, catalogue et conservation. Réponses aux questions de conception : [QUESTIONS.md](docs/QUESTIONS.md).
 
-Preuves conservées : [export du catalogue](docs/09_catalogue_avant_correction.csv) et [tags des colonnes de DIM_DRIVER](docs/02_tags_dim_driver_avant_correction.png). Les noms historiques « avant correction » ne préjugent pas d’une extension future : ils désignent l’état reçu. Aucun changement Snowflake n’est nécessaire pour appliquer cette décision documentaire.
+### Dépôt public et livrables
 
-## Accès : préparation avant les politiques
+Les CSV du personnel, .venv, secrets, clés et connexions sont exclus par .gitignore. Les captures contiennent des agrégats, masques ou métadonnées. Les modèles vierges et la copie de README destinée au formateur ont été retirés ; les documents de référence restent identifiés comme tels. La publication des commits se fait après inspection du contenu, sans ajouter les CSV ni les sorties nominatives.
 
-Le 6 novembre 2026, le cahier `docs/ACCES.md` et le SQL `snowflake/gouvernance/tests/01_tests_acces.sql` sont écrits avant les scripts 03/04. Ils fixent les masques, les volumes par dépôt et les résultats attendus ; aucun résultat obtenu n’est inventé.
+- [VEILLE.md](docs/VEILLE.md) : droit, cinq fiches, suivi et confrontation.
+- [REGISTRE.md](docs/REGISTRE.md) : inventaire des sources et dérivations, registre et preuves.
+- [ACCES.md](docs/ACCES.md) : propriété, privilèges, matrice et cahier de tests.
+- [SUIVI.md](docs/SUIVI.md) : index des captures et état actuel.
+- [CONTROLE_RENDU.md](docs/CONTROLE_RENDU.md) : critères hors bonus, preuves et réserves.
+- [QUESTIONS.md](docs/QUESTIONS.md) et [SOUTENANCE.md](docs/SOUTENANCE.md) : réponses et déroulé oral.
+- snowflake/gouvernance/ et snowflake/rh/ : scripts versionnés.
 
-Prochain ordre : `snowflake/gouvernance/02_roles_metier.sql` (ACCOUNTADMIN, droits des quatre métiers), puis `snowflake/rh/01_annee_naissance.sql` (TRANSFORMER, migration de la table existante). Ensuite seulement écrire et appliquer les politiques. Les rôles ne sont attribués qu’à l’utilisateur courant de test ; ouverture métier après validation.
-
-Choix de minimisation : conserver la date complète pour RH_PAIE, créer birth_year pour ANALYSTE, masquer la date complète pour l’analyste et les responsables. Dates d’embauche/fin masquées pour ANALYSTE ; activité et statut accessibles pour l’analyse. Pour les responsables, lecture stricte des valeurs autorisées : noms et téléphone, plus identifiant et dépôt nécessaires au périmètre ; les autres attributs restent masqués.
-
-Les scripts de création et transformation de DIM_DRIVER sont adaptés : liste explicite des colonnes de l’INSERT OVERWRITE et calcul de birth_year, sans recréer la table. La migration ajoute une colonne ; après elle, le catalogue MARTS comporte 25 lignes (DIM_DRIVER : 13) et les cinq tables totalisent 47 colonnes, toutes à décrire. Les captures précédentes restent des preuves datées de l’état initial à 24/46 colonnes.
-
-Sur un compte neuf : 00_tables_rh.sql crée déjà birth_year ; les transformations la remplissent. Sur le compte existant : exécuter 01_annee_naissance.sql avant de relancer dim_driver.sql ou catalogue_dim_driver.sql. La migration pose description et tag elle-même ; V_CATALOGUE reflète automatiquement la colonne.
-
-### Politiques préparées après le test rouge
-
-La [capture avant protection](docs/10_test_analyste_avant_politiques.png) montre 400 dates complètes accessibles à ANALYSTE et zéro prénom masqué. Les politiques sont écrites ensuite : masque par tag pour identité/coordonnées/date/année, masques directs pour les autres attributs, accès par dépôt piloté par ACCES_DEPOT sur les quatre tables RH. CURRENT_ROLE est utilisé explicitement ; rôle absent du mapping : aucune ligne. DIM_DEPOT n’est pas filtrée. Les preuves d’accès sont conservées ; rejeu des scripts de politiques validé, capture 26.
-
-### Preuves d’accès après politiques
-
-Le 6 novembre 2026, les quatre résultats de `tests/03_demo_quatre_roles.sql` sont vérifiés : [paie](docs/03a_acces_rh_paie.png), [Queens](docs/03b_acces_queens.png), [analyste](docs/03c_acces_analyste.png), [administrateur](docs/03d_acces_accountadmin.png). Le passage rouge → vert est prouvé pour le prénom et la date complète côté analyste ; le nombre de chauffeurs est limité à 161 pour Queens et à zéro pour ACCOUNTADMIN. Les résultats déclarés et observés sont distingués dans ACCES.md ; maintien après tâches prouvé par 18 contrôles.
-
-### Vérifications synthétiques avant purge
-
-Dans `snowflake/gouvernance/tests/`, exécuter `02_test_mapping.sql` en entier dans une même feuille : trois étapes dans le résultat final, toutes attendues OK. Il ajoute puis retire la seule habilitation de test ; pas de changement des politiques. Ensuite, `04_reconstruction_verification.sql` en entier : reconstruit les trois tables MARTS avec les INSERT OVERWRITE et affiche 12 contrôles, tous attendus OK avant purge. Mapping confirmé après purge : 143/365 → 249/655 → 143/365 ; reconstruction 04 déclarée OK et 18 contrôles après tâches observés.
-
-### Conservation et purge : choix de mise en œuvre
-
-R1 est implémentée avec end_date strictement antérieure à DATEADD(year,-5,CURRENT_DATE()) ; un chauffeur en poste (NULL) reste conservé. Les copies MARTS et services RAW sont supprimées avant RAW.DRIVERS, dans une transaction avec rollback sur erreur. Les vues STAGING reflètent la source ; aucune table ni protection n’est recréée. La table de dépôts, non personnelle, reste intacte.
-
-Au 6 novembre 2026, référence locale du kit : 46 chauffeurs concernés, donc 354 restants ; aucun service ne concerne ces 46 chauffeurs dans le jeu fourni, donc 25 951 services restent. Le DELETE des services est néanmoins indispensable pour les futurs fichiers. Les 25 services orphelins existants ne sont pas automatiquement attribuables à des chauffeurs expirés : ils relèvent du contrôle service_rattache.
-
-R2 est un paramètre de table, pas le tag DUREE_CONSERVATION. Les quatre tables permanentes sont limitées à un jour de Time Travel, suivi des sept jours de Fail-safe documentés dans la veille. La purge quotidienne introduira un délai de passage allant jusqu’à environ 24 heures ; les CSV locaux et sauvegardes externes ne sont pas effacés par une requête Snowflake. Si un fichier complet historique est rechargé, la purge doit être réappliquée avant reconstruction et ouverture des usages ; la déduplication de COPY ne remplace pas cette règle.
-
-Sources techniques consultées le 6 novembre 2026 : [Time Travel](https://docs.snowflake.com/en/user-guide/data-time-travel), [AT/BEFORE](https://docs.snowflake.com/en/sql-reference/constructs/at-before). Purge et rétention exécutées, preuves 11 et 12.
-
-### Captures de conservation et règles de qualité
-
-Preuves vérifiées : [rétention des quatre tables](docs/11_retention_un_jour.png), [première purge et Time Travel](docs/12_purge_et_time_travel.png). Le rejeu du fichier de preuve prend un nouvel instant : il ne doit pas être utilisé pour retrouver automatiquement la référence initiale à 400.
-
-Qualité exécutée : licence_unique, seuil zéro, avertissement ; email_valide, seuil zéro, avertissement ; service_rattache, seuil 50, blocage au dépassement. Chaque exécution ajoute trois lignes dans QUALITE_RESULTATS, sans valeurs personnelles. Le résultat du contrôle bloquant est committé avant l’erreur afin de conserver la preuve. Attendus locaux après purge : 4 / 7 / 25 anomalies ; ALERTE / ALERTE / OK. Une alerte qualité n’est ni une erreur technique ni une correction automatique. Le contrôle fourni de licence compte les répétitions par COUNT(*)-COUNT(DISTINCT licence), et inclut les NULL si présents : cette limite est documentée plutôt que modifiée silencieusement.
-
-### Automatisation exécutée
-
-T_PURGE exécute le même bloc que purge_rh.sql ; T_QUALITE celui de qualite_rh.sql ; T_TABLES reprend les trois INSERT OVERWRITE exacts dans une transaction. Création conditionnelle puis ALTER TASK MODIFY AS évitent de recréer les tâches et leurs dépendances. La racine est suspendue avant édition, puis les trois tâches sont laissées suspendues en sortie. Horaire : 05:00 Europe/Paris ; warehouse NYC_TAXI_WH, propriétaire TRANSFORMER. La mesure bloquante est committée avant l’exception. Les scripts de lancement, consultation et suspension sont séparés pour rendre les points de capture explicites.
-
-Suivi filtré sur NYC_TAXI.MARTS et les trois noms, dernier graph_run_group_id et sa tentative : un succès d’une ancienne exécution ne doit pas masquer un échec récent. Exécution demandée ne signifie pas terminée ; attendre les trois SUCCEEDED avant capture. Documentation : [CREATE TASK](https://docs.snowflake.com/en/sql-reference/sql/create-task), [ALTER TASK](https://docs.snowflake.com/en/sql-reference/sql/alter-task), [TASK_HISTORY](https://docs.snowflake.com/en/sql-reference/functions/task_history), consultées le 6 novembre 2026.
-
-
-## Preuves et limites de validation
-
-Toutes les catégories de captures demandées figurent dans `docs/SUIVI.md` : veille, tags, comparaison de rôles, lignage, graphe réussi, qualité et audit. Les preuves complémentaires couvrent purge/Time Travel, blocage et rétablissement, reconstruction protégée, mapping et stage vide. Détails et niveau de preuve dans `docs/ACCES.md`.
-
-Le rejeu des politiques A14 est validé par la capture 26 (18 contrôles OK). Le rejeu immédiat du chargement reste non formellement prouvé. Les tests complémentaires SYSADMIN et GOUVERNANCE sur RAW/STAGING restent ouverts ; les refus métier/RAW et GOUVERNANCE/DIM_DRIVER ont été déclarés conformes par Lucas. Ne pas assimiler une capture agrégée à la validation de toutes les colonnes.
-
-Avant de terminer, préparer la démonstration avec `docs/SOUTENANCE.md`, puis suspendre la racine avec `snowflake/rh/suspendre_taches_rh.sql` après la dernière exécution terminée. Ce script évite les départs automatiques ultérieurs et ne supprime aucun objet. L’assistant a créé des commits locaux ; aucun push effectué.
+Sources techniques : [COPY INTO](https://docs.snowflake.com/en/sql-reference/sql/copy-into-table), [Time Travel](https://docs.snowflake.com/en/user-guide/data-time-travel), [Fail-safe](https://docs.snowflake.com/en/user-guide/data-failsafe), [tâches](https://docs.snowflake.com/en/user-guide/tasks-graphs), [ACCESS_HISTORY](https://docs.snowflake.com/en/sql-reference/account-usage/access_history). Sources juridiques et dates dans la veille.

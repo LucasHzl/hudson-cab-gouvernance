@@ -1,6 +1,6 @@
 # Note de veille réglementaire — données du personnel de Hudson Cab Partners
 
-Document en cours — mis à jour le 6 novembre 2026. Droit applicable, cinq fiches et première confrontation rédigés. Inscription à la lettre CNIL enregistrée, capture vérifiée et rangée ; relecture et décisions juridiques à confirmer. Les dates de consultation des sources restent celles du 5 novembre 2026.
+Version du 6 novembre 2026. Cinq fiches, dispositif de suivi et confrontation de chaque règle du contrat. Les sources juridiques ont été consultées le 5 novembre 2026 ; champ territorial et référentiel RH CNIL revérifiés le 6 novembre 2026.
 
 ## 1. Le droit applicable
 
@@ -15,20 +15,20 @@ Le traitement : les données de chauffeurs employés à New York, gérées depui
 
 ## 2. Le dispositif de veille
 
-**Outil retenu : lettre officielle de la CNIL, reçue par courriel.** Le 6 novembre 2026, la capture fournie par Lucas montre le message « Vos informations ont été ajoutées avec succès ». Elle atteste l’enregistrement de l’inscription ; la réception d’une première lettre n’a pas encore été constatée. Aucune adresse personnelle ni lien de confirmation n’est visible.
+**Outil en place : abonnement par courriel à la lettre officielle de la CNIL.** Inscription enregistrée le 6 novembre 2026, preuve ci-dessous. La première réception n’est pas encore consignée ; aucune adresse personnelle ni lien de confirmation n’est publié.
 
 ![Inscription à la lettre CNIL enregistrée avec succès](01_abonnement_veille.png)
 
-La newsletter apporte les principales nouvelles mensuelles de la CNIL ; la revue hebdomadaire des trois sources ci-dessous reste une organisation proposée, pas un abonnement automatique aux trois organismes. Les suivis complémentaires restent à configurer.
+La lettre apporte les principales nouvelles mensuelles de la CNIL. Le dispositif associe cette notification automatique à une revue manuelle des trois sources officielles chaque vendredi, pendant vingt minutes. Cette fréquence est une règle d’organisation ; elle ne signifie pas qu’une revue hebdomadaire passée est déjà prouvée.
 
-| Source officielle | Ce qu’on surveille | Fréquence de revue proposée | Outil / état |
+| Source officielle | Ce qu’on surveille | Fréquence de revue | Outil / état |
 |---|---|---|---|
 | [CNIL](https://www.cnil.fr/fr/actualite) | Recommandations RH, conservation, sécurité | Chaque vendredi, 20 minutes | [Lettre CNIL](https://www.cnil.fr/fr/newsletter) : inscription enregistrée ; preuve ci-dessus. Flux RSS facultatif en complément. |
-| [CEPD / EDPB](https://www.edpb.europa.eu/news/news_en) | Interprétation territoriale, rôles, transferts et recommandations européennes | Même revue hebdomadaire | Suivi ou abonnement officiel à activer ; preuve à fournir. |
-| [EUR-Lex](https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32016R0679) | Texte, rectificatifs et évolutions du RGPD | Même revue hebdomadaire, et avant changement majeur | Alerte EUR-Lex ou suivi documenté à configurer. |
-| [Documentation Snowflake](https://docs.snowflake.com/en/user-guide/data-availability) | Gouvernance, rétention, capacités techniques | Revue mensuelle et avant modification du pipeline | Suivi technique à configurer ; complément aux trois sources réglementaires. |
+| [CEPD / EDPB](https://www.edpb.europa.eu/news/news_en) | Interprétation territoriale, rôles, transferts et recommandations européennes | Même revue hebdomadaire | Consultation manuelle de la page officielle ; nouveautés et impacts consignés dans le journal de veille. |
+| [EUR-Lex](https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX:32016R0679) | Texte, rectificatifs et évolutions du RGPD | Même revue hebdomadaire, et avant changement majeur | Consultation manuelle du texte et de ses rectificatifs ; journal de veille. |
+| [Documentation Snowflake](https://docs.snowflake.com/en/user-guide/data-availability) | Gouvernance, rétention, capacités techniques | Revue mensuelle et avant modification du pipeline | Revue documentaire manuelle ; complément aux trois sources réglementaires. |
 
-Responsabilité proposée : Lucas centralise les nouveautés et consigne date, lien, impact, décision et action dans VEILLE.md. Les décisions juridiques sont remontées au DPO ou conseil juridique ; les modifications techniques passent par scripts versionnés et tests. Répartition avec un éventuel binôme à préciser. Traiter immédiatement une alerte critique ; aucune fréquence légale hebdomadaire n’est affirmée ici.
+L’équipe data centralise les nouveautés et consigne date, lien, impact, décision et action dans le journal ci-dessous. Une nouvelle recommandation reçue par la lettre déclenche une analyse ; les décisions juridiques sont soumises au conseil juridique ou au DPO, et les changements techniques passent par scripts et tests. Une alerte critique est traitée dès réception ; la fréquence hebdomadaire n’est pas une obligation légale.
 
 ## 3. Les fiches de veille
 
@@ -46,7 +46,7 @@ Sources consultées le **5 novembre 2026**. Les conséquences pour l’entrepôt
 - **Source et date** : RGPD du 27 avril 2016, article 5 §1 c-f et §2 ; [CNIL](https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre2).
 - **Texte** : limiter les données et leur durée à l’usage justifié, maintenir leur exactitude et démontrer leur protection.
 - **Entrepôt** : inventorier toutes les copies, justifier les cinq ans, tester les accès et purger sources et dérivations.
-- **Action** : mise en œuvre à réaliser ; la règle uniforme R1 n’est pas une preuve de conformité.
+- **Action** : purge et inventaire implémentés ; la règle uniforme R1 reste à justifier juridiquement.
 
 ### Fiche 3 — Base active et archivage intermédiaire
 
@@ -84,7 +84,7 @@ Analyse documentaire avant implémentation. « Cohérent » signifie que le méc
 | GOUVERNANCE et ACCOUNTADMIN sans lecture métier | D | Séparation des fonctions cohérente, pas garantie absolue contre un administrateur qui change les règles. | Tester rôle principal, désactiver rôles secondaires ; auditer changements et accès. |
 | TRANSFORMER lit et transforme | D | Accès nécessaire mais pouvoir étendu et risque de compromission. | Limiter utilisation, protéger authentification et tracer les actions. |
 | Rôles, jamais droits métier par utilisateur nommé | D | Gestion des habilitations cohérente. | Attribuer des rôles ; vérifier privilèges et héritages. |
-| Catalogue, descriptions, trois tags | D, E | Inventaire utile ; valeurs de tags insuffisantes pour toute l’activité personnelle. | Documenter ce manque ; stratégie compatible avec le contrat à décider. |
+| Catalogue, descriptions, trois tags | D, E | Inventaire utile ; valeurs de tags insuffisantes pour toute l’activité personnelle. | Écart consigné ; valeurs imposées conservées et masques directs sur les catégories non couvertes. |
 | Scripts rejouables et maintien des protections | D | Vérifiabilité cohérente. | Rejouer puis vérifier tags, commentaires et politiques ; éviter la recréation destructive des tables. |
 | Pas de secrets ni données personnelles dans Git public | D | Cohérent. | Vérifier fichiers, historique et captures avant publication. |
 | licence_unique, seuil zéro | A | Contrôle pertinent, résultat à mesurer. | Enregistrer doublons ; avertissement n’équivaut pas à correction. |
@@ -100,7 +100,7 @@ Analyse documentaire avant implémentation. « Cohérent » signifie que le méc
 
 Pour les tables permanentes, Snowflake conserve une période Fail-safe de sept jours après Time Travel. Elle n’est pas configurable et n’est pas une extension de consultation normale par les rôles métier. Un jour de Time Travel suivi de sept jours de Fail-safe donne une succession nominale de huit jours : ce n’est pas une attestation d’effacement physique à heure fixe, notamment en présence de requêtes longues ou d’autres copies.
 
-Source technique : [Snowflake, Understanding and viewing Fail-safe](https://docs.snowflake.com/en/en/user-guide/data-failsafe), documentation évolutive, consultée le 5 novembre 2026. Configuration réelle et preuves à vérifier ultérieurement.
+Source technique : [Snowflake, Understanding and viewing Fail-safe](https://docs.snowflake.com/en/en/user-guide/data-failsafe), documentation évolutive, consultée le 5 novembre 2026. Configuration à un jour prouvée sur quatre tables par la capture 11 ; lecture historique après purge prouvée par la capture 12.
 
 ## 5. Ce que la veille ne tranche pas
 
@@ -112,11 +112,16 @@ Source technique : [Snowflake, Understanding and viewing Fail-safe](https://docs
 - Organisation de l’archive intermédiaire, habilitations et modalités d’exercice des droits.
 - Arbitrage de la couverture des tags sans modifier silencieusement les exigences du projet.
 
-## 6. Preuves restantes
+## 6. Journal et preuves de veille
 
-- Preuve d’inscription CNIL reçue et rangée le 6 novembre 2026 : [capture](01_abonnement_veille.png). Première réception et suivis complémentaires CEPD/EUR-Lex non constatés.
-- Relecture des fiches par l’étudiant ; si travail en binôme, relecture croisée réelle à consigner.
-- Résultats des vérifications techniques et décisions du DPO non disponibles à ce stade.
+| Date | Source / fait | Impact | Décision et action |
+|---|---|---|---|
+| 5 novembre 2026 | RGPD, articles 3 et 4 | Établissement décideur en France ; données de chauffeurs américains | Documenter Hudson Cab Europe responsable du traitement |
+| 5 novembre 2026 | Référentiel RH CNIL, publié le 2 avril 2026 | Durées par activité, périmètre du droit du travail français | Ne pas transposer automatiquement aux contrats new-yorkais ; demander une justification par finalité |
+| 6 novembre 2026 | Inscription à la lettre CNIL | Notification automatique des actualités | Abonnement enregistré, capture 01 |
+| 6 novembre 2026 | Contrat et inventaire | Valeurs de tags insuffisantes | Écart C20 consigné, pas d’étiquette trompeuse ni extension silencieuse |
+
+Les propositions juridiques et décisions de conservation au-delà de l’exercice ne sont pas approuvées par un conseil dans le scénario. L’abonnement en place ne vaut pas souscription automatique aux autres organismes.
 
 ## Décision sur l’écart de taxonomie — 6 novembre 2026
 
@@ -124,6 +129,6 @@ Le contrat (introduction et section 3) fixe les valeurs ; le guide (étape 0 et 
 
 Décision : conserver les trois tags et les six valeurs, maintenir toutes les colonnes personnelles dans l’inventaire et les descriptions, appliquer les catégories adaptées et signaler les autres comme ECART_TAG_CONTRAT. Ne pas déclarer ces colonnes non personnelles pour faire passer le contrôle ; ne pas appeler une date de contrat date_naissance ni une recette identifiant_interne. Le critère de couverture C20 reste partiellement non satisfait, explicitement expliqué. Seul le formateur peut confirmer l’acceptation pédagogique de ce constat.
 
-L’absence de catégorie adaptée ne dispense pas de protection : les droits, politiques par colonne si nécessaire, filtrage par dépôt, purge et audit doivent couvrir ces données selon les besoins et la matrice. Aucun accès métier n’est ouvert à ce stade. La proposition d’extension a été retirée des scripts du dépôt ; aucune extension n’a été déclarée exécutée dans Snowflake.
+Les catégories sans étiquette adaptée restent protégées : masques par colonne, filtrage par dépôt, purge et audit. Les tests et captures sont référencés dans ACCES.md. La taxonomie imposée n’a pas été étendue.
 
 Preuve : l’export `09_catalogue_avant_correction.csv` contient 24 lignes décrites dans MARTS, dont 11 colonnes personnelles sans valeur adaptée ; 20 affectations manquent sur le périmètre RAW/MARTS d’après les schémas et scripts du catalogue. Ce manque est une incompatibilité interne des exigences, distincte d’une violation juridique automatiquement établie. Le RGPD impose une gouvernance et une protection adaptées ; il n’impose pas ces trois noms de tags Snowflake.

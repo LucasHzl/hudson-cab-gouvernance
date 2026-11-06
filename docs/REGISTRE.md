@@ -1,6 +1,6 @@
 # Registre du traitement — données du personnel
 
-Mis à jour le 6 novembre 2026. Inventaire des sources et dérivations, registre et preuves techniques renseignés à partir des scripts et résultats fournis par Lucas. Aucune valeur personnelle des CSV publiée ; les décisions juridiques restent à faire valider par le responsable du traitement.
+Mis à jour le 6 novembre 2026. Inventaire des sources et dérivations, registre et preuves techniques renseignés à partir des scripts et preuves d’exécution. Aucune valeur personnelle des CSV publiée ; les décisions juridiques restent à faire valider par le responsable du traitement.
 
 ## Partie 1 — Inventaire des données personnelles
 
@@ -12,7 +12,7 @@ Les 18 colonnes des deux fichiers sont personnelles dans leur contexte, car chaq
 
 ### `drivers.csv`
 
-| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE envisagé | Besoin métier / utilisation |
+| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE / écart | Besoin métier / utilisation |
 |---|---|---|---|
 | `driver_id` | Identifiant indirect, relié à la fiche RH et aux services. | identifiant_interne | Tous les rôles métier : jointures et comptages. |
 | `first_name` | Identité ; prénom directement nominatif, parfois insuffisant seul. | nom | Paie ; responsable du dépôt concerné pour organiser le travail. Masqué pour ANALYSTE. |
@@ -22,12 +22,12 @@ Les 18 colonnes des deux fichiers sont personnelles dans leur contexte, car chaq
 | `birth_date` | Attribut personnel pouvant contribuer à une identification indirecte. | date_naissance | Paie : date complète ; ANALYSTE : année seulement ; responsables : masquée. |
 | `tlc_license_number` | Identifiant officiel du chauffeur ; son caractère éventuellement public ne change pas sa nature personnelle. | identifiant_officiel | Paie selon le contrat. Masqué pour responsables et ANALYSTE. |
 | `depot` | Affectation professionnelle du chauffeur, identifiable par driver_id. | Écart : aucune valeur adaptée | Tous les métiers dans leur périmètre ; clé de filtrage des responsables. |
-| `hire_date` | Date du parcours professionnel d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Gestion du personnel ; calcul d’ancienneté. Accès selon matrice et choix de minimisation à préciser. |
-| `end_date` | Date du parcours professionnel et indication de départ. | Écart : aucune valeur adaptée | Gestion du personnel ; déclenchement de la purge ; distinction actifs et anciens. Accès à préciser. |
+| `hire_date` | Date du parcours professionnel d’un chauffeur identifiable. | Écart : aucune valeur adaptée | Gestion du personnel ; calcul d’ancienneté. Paie en clair ; responsables et analyste masqués, selon la matrice. |
+| `end_date` | Date du parcours professionnel et indication de départ. | Écart : aucune valeur adaptée | Gestion du personnel ; déclenchement de la purge ; distinction actifs et anciens. Paie en clair ; responsables et analyste masqués. |
 
 ### `driver_shifts.csv`
 
-| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE envisagé | Besoin métier / utilisation |
+| Colonne | Qualification : personnelle dans ce fichier | Tag DONNEE_PERSONNELLE / écart | Besoin métier / utilisation |
 |---|---|---|---|
 | `shift_id` | Identifiant du service relié à un chauffeur par driver_id. | identifiant_interne | Pipeline : dédoublonnage et traçabilité. Pas exposé dans le mart mensuel fourni. |
 | `driver_id` | Identifiant indirect reliant activité et personne. | identifiant_interne | Tous les rôles métier : jointures et activité par chauffeur. |
@@ -46,6 +46,7 @@ Copies identifiées dans les SQL fournis et transformations exécutées ; volume
 |---|---|---|
 | Les dix colonnes de drivers.csv | RAW.DRIVERS puis STAGING.STG_RH__DRIVERS | MARTS.DIM_DRIVER : les dix colonnes ; email normalisé, téléphone nettoyé, dépôt normalisé et dates typées dans STAGING. |
 | hire_date, end_date | STAGING.STG_RH__DRIVERS | MARTS.DIM_DRIVER.tenure_years : ancienneté calculée. |
+| birth_date | STAGING.STG_RH__DRIVERS | MARTS.DIM_DRIVER.birth_year : YEAR(birth_date), personnelle calculée, tag date_naissance. |
 | end_date | STAGING.STG_RH__DRIVERS | MARTS.DIM_DRIVER.is_active : statut calculé. |
 | first_name, last_name | RAW.DRIVERS → STAGING → MARTS.DIM_DRIVER | MARTS.MART_DRIVER_MONTHLY.driver_name : concaténation des noms ; personnelle aussi. |
 | Les huit colonnes de driver_shifts.csv | RAW.DRIVER_SHIFTS puis STAGING.STG_RH__DRIVER_SHIFTS | Vue de typage et dédoublonnage par shift_id. |
@@ -63,7 +64,7 @@ Les colonnes techniques _source_file et _loaded_at sont ajoutées par le chargem
 
 Les valeurs permises de DONNEE_PERSONNELLE décrivent l’identité et les identifiants, mais pas explicitement les dates professionnelles, l’affectation ni les mesures d’activité. Le même écart concerne les attributs calculés is_active, tenure_years, activity_month, nb_shifts et les agrégats par chauffeur. driver_name relève de nom.
 
-La qualification juridique et le tag technique sont distincts : une colonne n’est pas non personnelle parce qu’aucune étiquette prévue ne lui correspond. Décision après relecture du 6 novembre 2026 : conserver les valeurs imposées et signaler la couverture impossible sans étiquette trompeuse. Aucun élargissement de taxonomie retenu. L’écart reste explicite dans VEILLE.md, le README et V_CATALOGUE ; les protections et les tests doivent couvrir ces colonnes malgré cette limite de classement.
+La qualification juridique et le tag technique sont distincts : une colonne n’est pas non personnelle parce qu’aucune étiquette prévue ne lui correspond. Décision après relecture du 6 novembre 2026 : conserver les valeurs imposées et signaler la couverture impossible sans étiquette trompeuse. Aucun élargissement de taxonomie retenu. L’écart reste explicite dans VEILLE.md, le README et V_CATALOGUE ; masques directs et filtre de lignes protègent ces colonnes malgré cette limite de classement.
 
 ### Ce qui a surpris
 
@@ -75,16 +76,16 @@ Le dépôt de rattachement et les données d’activité sont personnels dans le
 
 Le registre des activités de traitement décrit ce qu'une organisation fait des données personnelles qu'elle détient. Cette fiche en est une version réduite, limitée à ce qu'un Data Engineer peut renseigner et prouver. La trame complète est celle de la CNIL (lien dans les ressources).
 
-Chaque réponse de la colonne de droite doit pouvoir être vérifiée dans l'entrepôt : indiquez la requête ou le fichier qui le prouve.
+Les résultats techniques sont reliés à leurs scripts et preuves ci-dessous.
 
 ### Le traitement
 
 | Rubrique | Réponse |
 |---|---|
 | Nom du traitement | Gouvernance des données du personnel et des services de Hudson Cab |
-| Finalité : à quoi servent ces données | Gestion du personnel, besoins de la paie, organisation des dépôts et analyse de l’activité ; périmètre et bases légales à détailler par usage. |
+| Finalité : à quoi servent ces données | Gestion du personnel, paie, organisation des dépôts et analyse d’activité. Le contrat seul ne constitue pas une base légale RGPD : exécution du contrat de travail, obligation applicable ou intérêt légitime doivent être établis par usage conformément à l’[article 6 du RGPD](https://www.cnil.fr/fr/reglement-europeen-protection-donnees/chapitre2) ; ces fondements ne sont pas démontrés par le scénario. |
 | Personnes concernées | Chauffeurs des dépôts Bronx, Brooklyn et Queens ; données fictives traitées pédagogiquement comme un fichier réel. |
-| Service responsable des données | Hudson Cab Europe, selon le pouvoir de décision décrit par le brief ; interlocuteur opérationnel RH à préciser. |
+| Service responsable des données | Hudson Cab Europe, responsable du traitement ; service RH pour le contenu et équipe data pour l’entrepôt. Les coordonnées et la désignation d’un DPO ne sont pas fournies dans le scénario. |
 
 ### Les données
 
@@ -132,7 +133,7 @@ La taxonomie imposée ne couvre pas toutes les catégories personnelles : invent
 | Sujet | Résultat observé | Preuve |
 |---|---|---|
 | Année de naissance | birth_year calculée et taguée, date complète masquée à ANALYSTE | Migration 01_annee_naissance.sql ; captures 03c et 15 |
-| Accès | Paie, Queens, analyste et administrateur comparés ; autres tests déclarés distingués dans ACCES.md | Captures 03a à 03d |
+| Accès | Paie, Queens, analyste et administrateur comparés ; tests détaillés et niveau de preuve dans ACCES.md | Captures 03a à 03d |
 | Extension du périmètre | Queens 143/365 → Queens+Bronx 249/655 → Queens 143/365 | Capture 24 |
 | Reconstruction | 18 contrôles OK après tâches ; masques, filtres, descriptions et conservation maintenus | Capture 15 |
 | Chaîne quotidienne | Trois tâches sous TRANSFORMER, horaire 05:00 Europe/Paris ; lancement manuel réussi | Captures 13, 17, 19, 22 ; départ automatique à l’horaire non observé |
@@ -142,4 +143,10 @@ La taxonomie imposée ne couvre pas toutes les catégories personnelles : invent
 | Lignage | DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS alimentent le mensuel | Capture 04 |
 | Stage | Zéro fichier | Capture 25 |
 
-Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu des politiques validé par la capture 26, avec 18 contrôles OK. Rejeu immédiat du chargement et contrôles additionnels non exécutés restent indiqués dans ACCES.md et SUIVI.md.
+Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu des politiques validé par la capture 26, avec 18 contrôles OK. Deux recettes finales couvrent le rejeu du chargement et les accès complémentaires ; leurs résultats restent à consigner dans ACCES.md.
+
+### Destinataires, transferts et droits
+
+Les destinataires internes sont les rôles métier de la matrice et TRANSFORMER pour les opérations. Snowflake traite les données pour le compte de Hudson Cab Europe ; la convention de sous-traitance et les prestataires ultérieurs doivent être vérifiés au titre de l’article 28. Le déploiement AWS Paris ne prouve pas l’absence d’accès depuis un pays tiers. Les contrats, contacts opérationnels et éventuels transferts ne sont pas fournis dans le scénario : aucune validation documentaire n’est affirmée.
+
+Les demandes de droits sont à adresser au responsable du traitement via le service RH. Identifiants et données dérivées permettent de retrouver les copies pour accès, rectification ou effacement sous réserve des obligations applicables. Le présent exercice ne met pas en œuvre un portail de demandes ni un registre complet des contrats et transferts.
