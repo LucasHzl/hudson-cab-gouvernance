@@ -120,9 +120,11 @@ FROM NYC_TAXI.GOUVERNANCE.V_CATALOGUE;
 USE SECONDARY ROLES NONE;
 USE ROLE ACCOUNTADMIN;
 USE WAREHOUSE NYC_TAXI_WH;
-SELECT COUNT(*) AS chauffeurs FROM NYC_TAXI.MARTS.DIM_DRIVER;
-SELECT COUNT(*) AS services FROM NYC_TAXI.RAW.DRIVER_SHIFTS;
--- Attendu après politiques : 0 et 0.
+SELECT CURRENT_ROLE() AS role_actif,
+       (SELECT COUNT(*) FROM NYC_TAXI.MARTS.DIM_DRIVER) AS chauffeurs_visibles,
+       (SELECT COUNT(*) FROM NYC_TAXI.RAW.DRIVER_SHIFTS) AS services_raw_visibles;
+-- Une seule ligne de résultat : ACCOUNTADMIN / 0 / 0.
+-- Le numéro de ligne 1 à gauche de la grille n’est pas un compteur métier.
 
 -- REFUS 1 : lancer ce bloc seul. GOUVERNANCE ne lit pas le personnel.
 USE SECONDARY ROLES NONE;

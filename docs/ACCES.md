@@ -69,22 +69,22 @@ Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu
 | Test | Rôle / opération | Attendu après politiques | Obtenu | Statut |
 |---|---|---|---|---|
 | A00 | ANALYSTE, test avant politiques | Cible finale : 400 chauffeurs / 400 prénoms masqués / 0 date complète | Capture : 400 / 0 / 400 | ROUGE observé avant protection |
-| A01 | RH_PAIE, comptages | 400 chauffeurs, 914 lignes mensuelles, valeurs autorisées en clair | DIM_DRIVER : 400 chauffeurs, 0 prénom masqué, 400 dates et années visibles ; mensuel/autres valeurs à tester | PARTIEL, capture 03a |
-| A02 | RESP_DEPOT_QUEENS | 161 chauffeurs, 365 lignes mensuelles ; aucun autre dépôt | DIM_DRIVER : 161 chauffeurs, 0 prénom masqué, 0 date/année visible ; mensuel et contrôle des autres dépôts à tester | PARTIEL, capture 03b |
-| A03 | RESP_DEPOT_BRONX | 122 chauffeurs, 290 lignes mensuelles ; aucun autre dépôt | Non exécuté | À faire |
-| A04 | ANALYSTE | 400 chauffeurs, 914 lignes mensuelles ; noms/téléphone/email/licence masqués ; année seule | DIM_DRIVER : 400 chauffeurs, 400 prénoms masqués, 0 date complète, 400 années ; autres champs/mensuel à tester | PARTIEL, capture 03c |
-| A05 | GOUVERNANCE lit DIM_DRIVER | Refus d’autorisation | Non exécuté | À faire |
-| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | DIM_DRIVER : 0 ligne ; RAW.DRIVER_SHIFTS à tester | PARTIEL, capture 03d |
-| A07 | RH_PAIE lit RAW.DRIVER_SHIFTS | Refus d’autorisation | Non exécuté | À faire |
-| A08 | ANALYSTE lit RAW.DRIVERS | Refus d’autorisation | Non exécuté | À faire |
-| A09 | Les quatre métiers lisent DIM_DEPOT | Trois garages sans filtre | Non exécuté | À faire |
-| A10 | Responsables : emails/licences/date/année/attributs complémentaires | Aucun email/licence en clair ; dates, année et autres attributs masqués NULL | Non exécuté | À faire |
-| A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Prénoms 400 masqués, dates complètes 0, années 400 ; noms/email/téléphone/licence à tester | PARTIEL, capture 03c |
-| A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Non exécuté | À faire |
-| A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | Non exécuté | À faire |
+| A01 | RH_PAIE, comptages | 400 chauffeurs, 914 lignes mensuelles, valeurs autorisées en clair | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
+| A02 | RESP_DEPOT_QUEENS | 161 chauffeurs, 365 lignes mensuelles ; aucun autre dépôt | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
+| A03 | RESP_DEPOT_BRONX | 122 chauffeurs, 290 lignes mensuelles ; aucun autre dépôt | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
+| A04 | ANALYSTE | 400 chauffeurs, 914 lignes mensuelles ; noms/téléphone/email/licence masqués ; année seule | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
+| A05 | GOUVERNANCE lit DIM_DRIVER | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
+| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | DIM_DRIVER zéro prouvé par 03d ; paire zéro/zéro du fichier 01 à clarifier (retour « 1 · 0 ») | PARTIEL |
+| A07 | RH_PAIE lit RAW.DRIVER_SHIFTS | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
+| A08 | ANALYSTE lit RAW.DRIVERS | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
+| A09 | Les quatre métiers lisent DIM_DEPOT | Trois garages sans filtre | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
+| A10 | Responsables : emails/licences/date/année/attributs complémentaires | Aucun email/licence en clair ; dates, année et autres attributs masqués NULL | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
+| A11 | ANALYSTE : identité et date complète | 400 prénoms masqués, 400 noms masqués ; aucun email/téléphone/licence en clair ; zéro date complète ; 400 années | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
+| A12 | ANALYSTE lit V_CATALOGUE | 25 colonnes, 3 tables, zéro description absente ; 11 écarts de taxonomie signalés | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
+| A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | Contrôles de l’état actuel déclarés conformes dans 01 ; reconstruction puis répétition encore à effectuer | PARTIEL |
 | A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Non exécuté | À faire |
 | A15 | Réexécuter les transformations | Tags, commentaires et politiques maintenus ; tests A01-A13 encore satisfaits | Non exécuté | À faire |
-| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Ajouter Bronx donne 283 chauffeurs et 655 lignes mensuelles, sans changer la politique ; restaurer ensuite le mapping | Non exécuté | À faire |
+| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Ajouter Bronx donne 283 chauffeurs et 655 lignes mensuelles, sans changer la politique ; restaurer ensuite le mapping | 655 lignes mensuelles rapportées ; compteur 283 chauffeurs et restauration 161/365 à confirmer | PARTIEL |
 | A17 | Rôle SYSADMIN, absent du mapping | Zéro ligne RH | Non exécuté | À faire |
 | A18 | RAW avec ACCOUNTADMIN : noms et emails | Zéro ligne, pas de donnée personnelle à afficher | Non exécuté | À faire |
 | A19 | GOUVERNANCE lit RAW ou STAGING | Refus d’autorisation | Non exécuté | À faire |
@@ -130,3 +130,9 @@ Même requête agrégée du script tests/03_demo_quatre_roles.sql, quatre captur
 | D04 | ACCOUNTADMIN | 0 / 0 / 0 / 0 | 0 / 0 / 0 / 0 | VERT observé | [03d_acces_accountadmin.png](03d_acces_accountadmin.png) |
 
 Les captures sont des résultats agrégés sans noms, coordonnées, licences ni dates individuelles. Elles satisfont la preuve visuelle de comparaison de deux rôles, avec quatre rôles documentés. Les refus d’accès GOUVERNANCE/RAW, le rôle Bronx, les valeurs complémentaires, MART_DRIVER_MONTHLY, le catalogue métier, l’extension du mapping et la stabilité après pipeline restent à vérifier. Ne pas transformer ces tests partiels en un cahier entièrement vert.
+
+### Retours sur les fichiers 01 et 02 — 6 novembre 2026
+
+Lucas déclare les résultats du fichier 01 conformes, sauf une grille interprétée comme « 1 · 0 » sur le bloc attendu zéro/zéro. Cette lecture peut correspondre au numéro de ligne 1 et à la valeur zéro, sans que cela soit confirmé. Le bloc ACCOUNTADMIN affiche désormais les deux compteurs dans un SELECT unique avec des noms explicites ; aucun résultat ambigu déclaré vert.
+
+Pour le mapping, 655 était la sortie du second SELECT, les 283 chauffeurs provenant d’un SELECT distinct. Les deux compteurs sont regroupés dans une seule ligne ; après restauration, ils doivent valoir 161 et 365. Ces clarifications changent uniquement l’affichage des tests, pas les politiques ou le mapping. Ne pas réinsérer une entrée pour afficher un compteur : employer la requête combinée sur l’état présent, puis terminer le ROLLBACK si la transaction de test est encore ouverte.

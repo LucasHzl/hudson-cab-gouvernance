@@ -121,3 +121,7 @@ Erreur de compilation signalée dans 03_masquage.sql sur l’attache groupée au
 ## Quatre preuves d’accès reçues — 6 novembre 2026
 
 03a RH_PAIE : 400 / 0 / 400 / 400 ; 03b Queens : 161 / 0 / 0 / 0 ; 03c ANALYSTE : 400 / 400 / 0 / 400 ; 03d ACCOUNTADMIN : 0 / 0 / 0 / 0. Captures renommées et rangées, copies identiques vérifiées. Résultats D01-D04 de la démo verts dans ACCES.md. Tests plus larges A01/A02/A04/A06/A11 indiqués partiels ; pas de conclusion sur les attributs non affichés ou sur MART_DRIVER_MONTHLY. Prochaines validations : cahier complet, mapping et reconstruction avant purge.
+
+## Clarification des compteurs de tests — 6 novembre 2026
+
+Fichier 01 déclaré conforme par Lucas, exception de lecture sur le bloc zéro/zéro à confirmer. Fichier 02 : 655 lignes mensuelles rapportées, compteur chauffeur non vu car résultat séparé. Deux paires de SELECT regroupées en un tableau par contrôle. Pas de changement de politique ni nouvelle habilitation. Résultats détaillés marqués déclarés ou partiels dans ACCES.md ; restauration du mapping, reconstruction et vérifications après rejeu encore à confirmer.
