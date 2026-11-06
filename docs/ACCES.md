@@ -144,3 +144,7 @@ Lucas confirme ACCOUNTADMIN 0/0 et Queens restauré à 161/365. L’étape éten
 02_test_mapping.sql affiche désormais un tableau final de trois étapes, obtenu et attendu : 161/365, 283/655, 161/365. L’ajout et son retrait sont validés dans des transactions séparées avant changement de rôle ; l’entrée doit être absente au départ, sinon le test s’arrête sans l’écraser. L’état final conserve les habilitations initiales. Cette version remplace le parcours interactif avec ROLLBACK ; les mentions précédentes décrivent l’historique.
 
 04_reconstruction_verification.sql réexécute les trois INSERT OVERWRITE des fichiers métier avec TRANSFORMER, compare emails et source sans les afficher, vérifie maintien des compteurs de tags/politiques de DIM_DRIVER et des descriptions, puis contrôle les accès. Tableau final de 12 assertions, avant purge, toutes attendues OK. Préparé, non exécuté. Le test après tâches devra encore vérifier les quatre tables et l’ensemble du catalogue.
+
+### Correctif du test de reconstruction — 6 novembre 2026
+
+Erreur signalée sur les mots « vide » et « la » : deux commentaires avaient été extraits comme instructions lors de la préparation du script 04. Les deux lignes sont retirées ; les trois INSERT OVERWRITE INTO ont été comparés intégralement aux fichiers rh/marts correspondants, avec recherche ancrée en début de ligne SQL. Ce contrôle local ne confirme pas l’exécution Snowflake. Script corrigé à relancer entièrement ; aucune table, politique ou tag supprimé. Le test de reconstruction reste en attente de résultat.

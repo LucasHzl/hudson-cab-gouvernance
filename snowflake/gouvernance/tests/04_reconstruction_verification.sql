@@ -13,7 +13,6 @@ SET test_rejeu_tags_avant = (
  'NYC_TAXI.MARTS.DIM_DRIVER','table')));
 
 -- Même instruction que rh/marts/dim_depot.sql
-INSERT OVERWRITE vide la table et la remplit, sans la recréer.
 INSERT OVERWRITE INTO NYC_TAXI.MARTS.DIM_DEPOT (depot, quartier, ouvert_en, nb_places) VALUES
     ('Bronx',    'Hunts Point',       2009, 140),
     ('Brooklyn', 'East New York',     2011, 120),
@@ -21,7 +20,6 @@ INSERT OVERWRITE INTO NYC_TAXI.MARTS.DIM_DEPOT (depot, quartier, ouvert_en, nb_p
 
 
 -- Même instruction que rh/marts/dim_driver.sql
-INSERT OVERWRITE vide la table et la remplit, sans la recréer.
 INSERT OVERWRITE INTO NYC_TAXI.MARTS.DIM_DRIVER (
     driver_id, first_name, last_name, email, phone, birth_date,
     tlc_license_number, depot, hire_date, end_date, is_active, tenure_years, birth_year

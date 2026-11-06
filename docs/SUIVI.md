@@ -129,3 +129,7 @@ Fichier 01 déclaré conforme par Lucas, exception de lecture sur le bloc zéro/
 ## Compteurs clarifiés, dernières vérifications avant purge — 6 novembre 2026
 
 ACCOUNTADMIN 0/0 et Queens restauré 161/365 confirmés par Lucas. Extension du mapping pas encore validée. Test 02 simplifié en un tableau final avec trois étapes ; nouveau test 04 pour reconstruction des trois tables métier et 12 contrôles synthétiques. Scripts préparés, exécution à confirmer ; aucune purge réalisée.
+
+### Correctif du test de reconstruction — 6 novembre 2026
+
+Erreur signalée sur les mots « vide » et « la » : deux commentaires avaient été extraits comme instructions lors de la préparation du script 04. Les deux lignes sont retirées ; les trois INSERT OVERWRITE INTO ont été comparés intégralement aux fichiers rh/marts correspondants, avec recherche ancrée en début de ligne SQL. Ce contrôle local ne confirme pas l’exécution Snowflake. Script corrigé à relancer entièrement ; aucune table, politique ou tag supprimé. Le test de reconstruction reste en attente de résultat.
