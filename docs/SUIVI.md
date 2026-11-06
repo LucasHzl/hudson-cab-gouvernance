@@ -20,7 +20,7 @@ Les validations ci-dessous sont déclarées par l'étudiant, sauf mention contra
 - [x] Matrice et tests attendus écrits AVANT les politiques ; SQL de tests prêt, exécution à faire.
 - [x] Rôles et politiques exécutés ; démo agrégée de quatre rôles conforme et prouvée.
 - [ ] Cahier complet : Bronx, autres colonnes, mensuel, refus d’accès, catalogue, mapping et rejeu à vérifier.
-- [ ] Purge dans toutes les copies et rétention Time Travel.
+- [x] Purge dans les quatre tables et rétention un jour observées sur captures ; lecture historique avant purge prouvée.
 - [ ] Qualité et chaîne de tâches ; preuve du blocage.
 - [ ] Audit, lignage et vérification du maintien des protections.
 - [ ] README : exécution, décisions, écarts et limites ; vérification du contenu avant publication.
@@ -137,3 +137,9 @@ Erreur signalée sur les mots « vide » et « la » : deux commentaires avaient
 ## Reconstruction confirmée, conservation préparée — 6 novembre 2026
 
 Lucas confirme le succès du script 04 corrigé : douze contrôles attendus OK. Statut déclaré, sans capture dédiée. Test de mapping étendu pas encore attesté. conservation_rh.sql, purge_rh.sql et tests/05_preuve_purge.sql créés ; attentes et références locales consignées avant exécution. La purge touche les quatre tables, pas seulement RAW.DRIVERS ; Time Travel réglé séparément à un jour. Prochaine étape : vérifier le mapping avant purge, exécuter conservation puis preuve de purge et transmettre les résultats agrégés.
+
+## Preuves de conservation et préparation qualité — 6 novembre 2026
+
+Captures 11_retention_un_jour.png et 12_purge_et_time_travel.png rangées à l’identique : rétention un jour sur quatre tables, sept contrôles de purge OK dont historique 400 et courant 354. Rejeu de la preuve : nouvel instant de référence, donc historique 354 normal ; première preuve conservée. Consigne de capture désormais annoncée avant toute exécution et inscrite en tête des scripts.
+
+Qualité préparée : trois requêtes scalaires dont la licence fournie, plus qualite_rh.sql qui ajoute trois mesures et bloque uniquement service_rattache > 50, après commit des résultats. Attendus locaux 4 / 7 / 25, non encore observés dans Snowflake. Tâches et audit restent à réaliser.

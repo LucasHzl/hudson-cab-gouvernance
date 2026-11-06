@@ -155,10 +155,24 @@ Reconstruction 04 corrigée déclarée OK par Lucas le 6 novembre 2026 ; pas de 
 
 | Test | Attendu | Obtenu | Statut |
 |---|---|---|---|
-| R01, conservation_rh.sql | Quatre tables RH, retention_time=1 | Non exécuté | À faire |
-| R02, purge complète | Aucun chauffeur expiré ni copie liée dans RAW/MARTS | Non exécuté | À faire |
-| R03, contrôle avant/après | Au 6 novembre 2026 : 46 concernés, 400→354 chauffeurs ; 25 951 services inchangés car aucun ne concerne ces partants | Non exécuté | À faire |
-| R04, Time Travel | Après purge, l’état RAW.DRIVERS immédiatement antérieur reste lisible et compte 400 chauffeurs | Non exécuté | À faire |
-| R05, délai de Time Travel | Paramètre limité à un jour ; pas d’essai réel après 24 heures à ce stade | Non exécuté | À faire |
+| R01, conservation_rh.sql | Quatre tables RH, retention_time=1 | Capture 11 : quatre tables à 1, toutes OK | VERT observé |
+| R02, purge complète | Aucun chauffeur expiré ni copie liée dans RAW/MARTS | Capture 12 : quatre contrôles de copies expirées à zéro | VERT observé |
+| R03, contrôle avant/après | Au 6 novembre 2026 : 46 concernés, 400→354 chauffeurs ; 25 951 services inchangés car aucun ne concerne ces partants | Capture 12 : 354 chauffeurs courants, 25 951 services ; 400 historiques | VERT observé |
+| R04, Time Travel | Après purge, l’état RAW.DRIVERS immédiatement antérieur reste lisible et compte 400 chauffeurs | Capture 12, première exécution : historique 400 après purge à 354 | VERT observé |
+| R05, délai de Time Travel | Paramètre limité à un jour ; pas d’essai réel après 24 heures à ce stade | Rétention 1 observée ; disparition après 24 h non testée | PARAMÈTRE vérifié, délai réel non testé |
 
 Tests SQL : conservation_rh.sql puis tests/05_preuve_purge.sql. Le second exécute la purge : ne pas purger d’abord ailleurs, sinon la première preuve portera sur un état déjà purgé. Valeurs locales de référence calculées à partir du kit, sans publication d’IDs. Les futures tâches réutiliseront le même bloc de purge. Données historiques soumises aux droits et politiques actuels ; ne pas créer de clone personnel pour cette démonstration.
+
+## 9. Qualité — attentes avant exécution
+
+| Contrôle | Source | Seuil / gravité | Attendu après la purge initiale | Obtenu |
+|---|---|---|---|---|
+| licence_unique | RAW.DRIVERS, formule fournie du kit | 0, avertissement | 4 anomalies, ALERTE | Non exécuté |
+| email_valide | RAW.DRIVERS, absence de @ ou NULL | 0, avertissement | 7 anomalies, ALERTE | Non exécuté |
+| service_rattache | RAW.DRIVER_SHIFTS, chauffeur absent de RAW.DRIVERS | 50, bloquant seulement au-delà | 25 anomalies, OK | Non exécuté |
+| Historisation | QUALITE_RESULTATS | Une ligne par règle et exécution | Trois lignes ajoutées à chaque lancement | Non exécuté |
+| Blocage | Future tâche T_QUALITE | Mesure > seuil | Résultat committé puis erreur ; T_TABLES ne part pas | Non exécuté |
+
+Ces attentes viennent d’un calcul local sur le kit après exclusion des 46 chauffeurs expirés ; à confronter à Snowflake. La qualité ne corrige pas automatiquement les données. Les avertissements poursuivent la chaîne ; le seuil de 50 ne fait pas disparaître les 25 services orphelins. Les mesures sont validées en transaction avant la levée éventuelle de l’erreur bloquante.
+
+Préférence de preuves de Lucas : annoncer chaque capture avant l’instruction d’exécution et indiquer le point d’arrêt. La première preuve de purge est conservée ; au rejeu, 354 peut devenir la référence historique courante, sans invalider la capture initiale à 400.

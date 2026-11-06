@@ -104,8 +104,8 @@ Chaque réponse de la colonne de droite doit pouvoir être vérifiée dans l'ent
 
 | Règle | Comment elle est appliquée | Preuve |
 |---|---|---|
-| R1 : suppression 5 ans après la fin du contrat | Purge préparée des quatre tables ; transaction, suppression des copies avant la source. Exécution non confirmée. | rh/purge_rh.sql et gouvernance/tests/05_preuve_purge.sql |
-| R2 : pas de restauration au-delà de 1 jour | DATA_RETENTION_TIME_IN_DAYS=1 prévu sur les quatre tables ; Fail-safe distinct. Exécution non confirmée. | rh/conservation_rh.sql, sortie retention_time |
+| R1 : suppression 5 ans après la fin du contrat | Purge exécutée : 400→354 chauffeurs ; aucune copie expirée dans les quatre tables, première preuve vérifiée sur capture. | rh/purge_rh.sql, gouvernance/tests/05_preuve_purge.sql et capture 12_purge_et_time_travel.png |
+| R2 : pas de restauration au-delà de 1 jour | DATA_RETENTION_TIME_IN_DAYS=1 observé sur les quatre tables ; Fail-safe distinct ; disparition après 24 h non testée. | rh/conservation_rh.sql et capture 11_retention_un_jour.png |
 | R3 : pas de fichier sur le stage | PURGE=TRUE dans le COPY ; stage vide rapporté, dernière vérification LIST encore à conserver. | rh/chargement_rh_2_copier.sql |
 
 Délai réel entre l'exécution de la purge et la disparition définitive d'une donnée dans Snowflake, en tenant compte de Time Travel et de Fail-safe : Un jour de Time Travel puis sept jours de Fail-safe sur les tables permanentes : succession nominale de huit jours, sans garantie d’effacement physique à heure fixe. Les requêtes longues, copies externes et fichiers locaux doivent aussi être pris en compte.
@@ -115,7 +115,7 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 | Question | Réponse | Preuve |
 |---|---|---|
 | Peut-on dire qui a lu ces données la semaine dernière ? | | |
-| Sait-on quand une donnée est fausse ? | | |
+| Sait-on quand une donnée est fausse ? | Trois règles de qualité préparées, non exécutées ; elles signalent certaines anomalies, sans garantir toute l’exactitude. | rh/qualite_rh.sql et futurs résultats QUALITE_RESULTATS |
 | Que se passe-t-il si le rôle des outils est compromis ? | | |
 
 ### Limites connues
@@ -137,3 +137,7 @@ Les captures 03a à 03d attestent la démo agrégée DIM_DRIVER pour RH_PAIE, Qu
 ## État des preuves de conservation
 
 Scripts préparés le 6 novembre 2026, non exécutés. Aucun test de disparition après 24 heures ni d’effacement physique final attesté. La preuve Time Travel utilisera un instant enregistré avant purge et ne publiera que des comptes. Référence du kit pour cette date : 46 chauffeurs expirés, sans service de ces chauffeurs dans la période de services fournie.
+
+## Preuves de conservation reçues
+
+Le 6 novembre 2026 : capture 11 avec quatre rétentions à un jour ; capture 12 avec 354 chauffeurs courants, 400 dans l’état antérieur et zéro copie expirée. Ces preuves couvrent l’exécution et le paramétrage, pas un effacement physique observé après huit jours. La première capture reste la preuve de référence même après rejeu de la purge.

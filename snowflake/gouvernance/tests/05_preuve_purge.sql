@@ -1,3 +1,6 @@
+-- CAPTURE : prendre le tableau final IMMÉDIATEMENT après la première exécution.
+-- Ne pas relancer pour retrouver 400 : un rejeu mémorise un nouvel état avant,
+-- déjà à 354 chauffeurs après la première purge. Conserver la première preuve.
 -- EXÉCUTE réellement la purge, après avoir mémorisé des comptes et un instant.
 -- À lancer APRÈS conservation_rh.sql, une fois les tests avant purge terminés.
 -- Fichier entier dans une seule feuille/session. Pas de copie persistante des IDs.

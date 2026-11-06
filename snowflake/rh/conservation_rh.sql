@@ -1,3 +1,4 @@
+-- CAPTURE : conserver le tableau final des quatre rétentions avant de passer à la purge.
 -- R2 : un jour de Time Travel sur les quatre tables contenant des chauffeurs.
 -- TRANSFORMER possède les tables ; un tag de durée ne règle pas ce paramètre.
 USE SECONDARY ROLES NONE;
