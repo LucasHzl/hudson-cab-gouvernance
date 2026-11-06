@@ -115,7 +115,7 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 | Question | Réponse | Preuve |
 |---|---|---|
 | Peut-on dire qui a lu ces données la semaine dernière ? | | |
-| Sait-on quand une donnée est fausse ? | Trois règles de qualité préparées, non exécutées ; elles signalent certaines anomalies, sans garantir toute l’exactitude. | rh/qualite_rh.sql et futurs résultats QUALITE_RESULTATS |
+| Sait-on quand une donnée est fausse ? | Trois règles exécutées : 4 licences et 7 emails en ALERTE, 25 services orphelins sous le seuil bloquant 50 ; elles ne garantissent pas toute l’exactitude. | rh/qualite_rh.sql et futurs résultats QUALITE_RESULTATS |
 | Que se passe-t-il si le rôle des outils est compromis ? | | |
 
 ### Limites connues
@@ -141,3 +141,7 @@ Scripts préparés le 6 novembre 2026, non exécutés. Aucun test de disparition
 ## Preuves de conservation reçues
 
 Le 6 novembre 2026 : capture 11 avec quatre rétentions à un jour ; capture 12 avec 354 chauffeurs courants, 400 dans l’état antérieur et zéro copie expirée. Ces preuves couvrent l’exécution et le paramétrage, pas un effacement physique observé après huit jours. La première capture reste la preuve de référence même après rejeu de la purge.
+
+## Qualité observée et automatisation préparée
+
+Capture 06 des résultats manuels vérifiée. Tâches quotidiennes préparées, non exécutées à ce stade ; les preuves planifiées et du blocage restent à ajouter. Aucune correction des valeurs RH déduite du simple contrôle qualité.

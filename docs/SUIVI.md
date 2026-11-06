@@ -36,7 +36,7 @@ Les validations ci-dessous sont déclarées par l'étudiant, sauf mention contra
 | Même requête avec deux rôles, comparaison lisible | 03a à 03d_acces_*.png | Quatre captures vérifiées : démo conforme |
 | Lignage de MART_DRIVER_MONTHLY | 04_lignage.png | À faire |
 | Graphe des tâches et exécution réussie | 05_taches_succes.png | À faire |
-| Résultats de QUALITE_RESULTATS | 06_qualite.png | À faire |
+| Résultats de QUALITE_RESULTATS | 06_resultats_qualite_manuels.png | Trois règles et mesures manuelles vérifiées ; mesures par tâches à vérifier |
 | Résultat de la requête d'audit | 07_audit.png | À faire |
 
 La comparaison de deux rôles peut nécessiter deux images. Elle ne remplace pas le cahier de tests de tous les rôles, dont ACCOUNTADMIN et GOUVERNANCE.
@@ -143,3 +143,7 @@ Lucas confirme le succès du script 04 corrigé : douze contrôles attendus OK. 
 Captures 11_retention_un_jour.png et 12_purge_et_time_travel.png rangées à l’identique : rétention un jour sur quatre tables, sept contrôles de purge OK dont historique 400 et courant 354. Rejeu de la preuve : nouvel instant de référence, donc historique 354 normal ; première preuve conservée. Consigne de capture désormais annoncée avant toute exécution et inscrite en tête des scripts.
 
 Qualité préparée : trois requêtes scalaires dont la licence fournie, plus qualite_rh.sql qui ajoute trois mesures et bloque uniquement service_rattache > 50, après commit des résultats. Attendus locaux 4 / 7 / 25, non encore observés dans Snowflake. Tâches et audit restent à réaliser.
+
+## Qualité confirmée et chaîne préparée — 6 novembre 2026
+
+Capture 06_resultats_qualite_manuels.png rangée et comparée à l’original : email_valide 7 ALERTE, licence_unique 4 ALERTE, service_rattache 25/50 OK, même instant de mesure. Les trois requêtes sont opérationnelles manuellement. Chaîne T_PURGE → T_QUALITE → T_TABLES préparée sous TRANSFORMER, horaire Paris, création suspendue ; lancement, suivi, lecture qualité et suspension séparés. Test après tâches de 18 contrôles prêt, non exécuté. Le suivi groupe les tâches de la même exécution. Blocage, audit et lignage encore à réaliser.

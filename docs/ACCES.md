@@ -167,12 +167,27 @@ Tests SQL : conservation_rh.sql puis tests/05_preuve_purge.sql. Le second exécu
 
 | Contrôle | Source | Seuil / gravité | Attendu après la purge initiale | Obtenu |
 |---|---|---|---|---|
-| licence_unique | RAW.DRIVERS, formule fournie du kit | 0, avertissement | 4 anomalies, ALERTE | Non exécuté |
-| email_valide | RAW.DRIVERS, absence de @ ou NULL | 0, avertissement | 7 anomalies, ALERTE | Non exécuté |
-| service_rattache | RAW.DRIVER_SHIFTS, chauffeur absent de RAW.DRIVERS | 50, bloquant seulement au-delà | 25 anomalies, OK | Non exécuté |
+| licence_unique | RAW.DRIVERS, formule fournie du kit | 0, avertissement | 4 anomalies, ALERTE | Capture 06 : 4, ALERTE, conforme |
+| email_valide | RAW.DRIVERS, absence de @ ou NULL | 0, avertissement | 7 anomalies, ALERTE | Capture 06 : 7, ALERTE, conforme |
+| service_rattache | RAW.DRIVER_SHIFTS, chauffeur absent de RAW.DRIVERS | 50, bloquant seulement au-delà | 25 anomalies, OK | Capture 06 : 25 / 50, OK, conforme |
 | Historisation | QUALITE_RESULTATS | Une ligne par règle et exécution | Trois lignes ajoutées à chaque lancement | Non exécuté |
 | Blocage | Future tâche T_QUALITE | Mesure > seuil | Résultat committé puis erreur ; T_TABLES ne part pas | Non exécuté |
 
 Ces attentes viennent d’un calcul local sur le kit après exclusion des 46 chauffeurs expirés ; à confronter à Snowflake. La qualité ne corrige pas automatiquement les données. Les avertissements poursuivent la chaîne ; le seuil de 50 ne fait pas disparaître les 25 services orphelins. Les mesures sont validées en transaction avant la levée éventuelle de l’erreur bloquante.
 
 Préférence de preuves de Lucas : annoncer chaque capture avant l’instruction d’exécution et indiquer le point d’arrêt. La première preuve de purge est conservée ; au rejeu, 354 peut devenir la référence historique courante, sans invalider la capture initiale à 400.
+
+## 10. Chaîne quotidienne — attentes avant exécution
+
+Capture 06_resultats_qualite_manuels.png : trois mesures enregistrées au même instant, 6 novembre 2026 à 14:27:08.482 tel qu’affiché par Snowflake ; aucun fuseau déduit du TIMESTAMP_NTZ. Résultats conformes aux attentes. Elle ne prouve pas encore une exécution planifiée ni le blocage.
+
+| Test | Attendu | Obtenu | Statut |
+|---|---|---|---|
+| T01, création du graphe | T_PURGE → T_QUALITE → T_TABLES ; propriétaire TRANSFORMER, suspendues après création | Non exécuté | À faire |
+| T02, exécution normale | Les trois tâches SUCCEEDED dans le même graph_run_group_id | Non exécuté | À faire |
+| T03, qualité par tâche | Trois nouvelles mesures, 4/7/25 et ALERTE/ALERTE/OK | Non exécuté | À faire |
+| T04, contrôles après tâche | 18 contrôles OK : masques/filtre des quatre tables, descriptions, rétention, source et accès | Non exécuté | À faire |
+| T05, règle bloquante | Mesure de service_rattache supérieure au seuil de test : T_QUALITE FAILED, T_TABLES non démarrée, résultat enregistré | Non exécuté | À faire |
+| T06, rétablissement | Seuil contractuel 50 rétabli et nouvelle chaîne réussie | Non exécuté | À faire |
+
+La racine est prévue chaque jour à 05:00 Europe/Paris ; ses enfants n’ont pas d’horaire propre. Le rôle propriétaire détermine les accès, pas celui qui regarde l’interface. Les scripts de création laissent le graphe suspendu ; lancer_taches_rh.sql l’active et demande une exécution. Consulter suivi_taches_rh.sql pour le statut, sans redemander une exécution. Suspendre la racine à la fin du brief.
