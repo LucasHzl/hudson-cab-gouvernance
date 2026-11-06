@@ -104,3 +104,7 @@ La [capture avant protection](docs/10_test_analyste_avant_politiques.png) montre
 ### Preuves d’accès après politiques
 
 Le 6 novembre 2026, les quatre résultats de `tests/03_demo_quatre_roles.sql` sont vérifiés : [paie](docs/03a_acces_rh_paie.png), [Queens](docs/03b_acces_queens.png), [analyste](docs/03c_acces_analyste.png), [administrateur](docs/03d_acces_accountadmin.png). Le passage rouge → vert est prouvé pour le prénom et la date complète côté analyste ; le nombre de chauffeurs est limité à 161 pour Queens et à zéro pour ACCOUNTADMIN. Le cahier complet, le mensuel et le maintien après pipeline restent à vérifier ; voir les statuts détaillés dans ACCES.md.
+
+### Vérifications synthétiques avant purge
+
+Dans `snowflake/gouvernance/tests/`, exécuter `02_test_mapping.sql` en entier dans une même feuille : trois étapes dans le résultat final, toutes attendues OK. Il ajoute puis retire la seule habilitation de test ; pas de changement des politiques. Ensuite, `04_reconstruction_verification.sql` en entier : reconstruit les trois tables MARTS avec les INSERT OVERWRITE et affiche 12 contrôles, tous attendus OK avant purge. Scripts prêts mais résultats encore à confirmer.

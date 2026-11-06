@@ -74,7 +74,7 @@ Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu
 | A03 | RESP_DEPOT_BRONX | 122 chauffeurs, 290 lignes mensuelles ; aucun autre dépôt | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
 | A04 | ANALYSTE | 400 chauffeurs, 914 lignes mensuelles ; noms/téléphone/email/licence masqués ; année seule | Résultats du fichier 01 déclarés conformes par Lucas ; captures complémentaires déjà référencées | VERT déclaré et preuve partielle |
 | A05 | GOUVERNANCE lit DIM_DRIVER | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
-| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | DIM_DRIVER zéro prouvé par 03d ; paire zéro/zéro du fichier 01 à clarifier (retour « 1 · 0 ») | PARTIEL |
+| A06 | ACCOUNTADMIN lit DIM_DRIVER et RAW.DRIVER_SHIFTS | Zéro ligne malgré les droits hérités | Paire 0 / 0 confirmée par Lucas ; DIM_DRIVER également prouvé par 03d | VERT déclaré et capture partielle |
 | A07 | RH_PAIE lit RAW.DRIVER_SHIFTS | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
 | A08 | ANALYSTE lit RAW.DRIVERS | Refus d’autorisation | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
 | A09 | Les quatre métiers lisent DIM_DEPOT | Trois garages sans filtre | Résultats du fichier 01 déclarés conformes par Lucas ; pas de capture dédiée | VERT déclaré  |
@@ -84,7 +84,7 @@ Les tests sont **non exécutés, partiels ou observés** selon la colonne obtenu
 | A13 | TRANSFORMER après reconstruction | 400 chauffeurs avant purge ; zéro email contenant le masque ; zéro écart email avec STAGING ; années cohérentes | Contrôles de l’état actuel déclarés conformes dans 01 ; reconstruction puis répétition encore à effectuer | PARTIEL |
 | A14 | Réexécuter les scripts de politiques | Pas d’échec ni perte des règles | Non exécuté | À faire |
 | A15 | Réexécuter les transformations | Tags, commentaires et politiques maintenus ; tests A01-A13 encore satisfaits | Non exécuté | À faire |
-| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Ajouter Bronx donne 283 chauffeurs et 655 lignes mensuelles, sans changer la politique ; restaurer ensuite le mapping | 655 lignes mensuelles rapportées ; compteur 283 chauffeurs et restauration 161/365 à confirmer | PARTIEL |
+| A16 | Ajouter un dépôt au rôle Queens via ACCES_DEPOT | Ajouter Bronx donne 283 chauffeurs et 655 lignes mensuelles, sans changer la politique ; restaurer ensuite le mapping | 655 lignes mensuelles rapportées ; restauration 161/365 confirmée ; extension 283/655 non observée ensemble | PARTIEL |
 | A17 | Rôle SYSADMIN, absent du mapping | Zéro ligne RH | Non exécuté | À faire |
 | A18 | RAW avec ACCOUNTADMIN : noms et emails | Zéro ligne, pas de donnée personnelle à afficher | Non exécuté | À faire |
 | A19 | GOUVERNANCE lit RAW ou STAGING | Refus d’autorisation | Non exécuté | À faire |
@@ -136,3 +136,11 @@ Les captures sont des résultats agrégés sans noms, coordonnées, licences ni 
 Lucas déclare les résultats du fichier 01 conformes, sauf une grille interprétée comme « 1 · 0 » sur le bloc attendu zéro/zéro. Cette lecture peut correspondre au numéro de ligne 1 et à la valeur zéro, sans que cela soit confirmé. Le bloc ACCOUNTADMIN affiche désormais les deux compteurs dans un SELECT unique avec des noms explicites ; aucun résultat ambigu déclaré vert.
 
 Pour le mapping, 655 était la sortie du second SELECT, les 283 chauffeurs provenant d’un SELECT distinct. Les deux compteurs sont regroupés dans une seule ligne ; après restauration, ils doivent valoir 161 et 365. Ces clarifications changent uniquement l’affichage des tests, pas les politiques ou le mapping. Ne pas réinsérer une entrée pour afficher un compteur : employer la requête combinée sur l’état présent, puis terminer le ROLLBACK si la transaction de test est encore ouverte.
+
+### Confirmation et simplification des tests — 6 novembre 2026
+
+Lucas confirme ACCOUNTADMIN 0/0 et Queens restauré à 161/365. L’étape étendue n’est pas attestée par un résultat conjoint 283/655 ; A16 reste partiel.
+
+02_test_mapping.sql affiche désormais un tableau final de trois étapes, obtenu et attendu : 161/365, 283/655, 161/365. L’ajout et son retrait sont validés dans des transactions séparées avant changement de rôle ; l’entrée doit être absente au départ, sinon le test s’arrête sans l’écraser. L’état final conserve les habilitations initiales. Cette version remplace le parcours interactif avec ROLLBACK ; les mentions précédentes décrivent l’historique.
+
+04_reconstruction_verification.sql réexécute les trois INSERT OVERWRITE des fichiers métier avec TRANSFORMER, compare emails et source sans les afficher, vérifie maintien des compteurs de tags/politiques de DIM_DRIVER et des descriptions, puis contrôle les accès. Tableau final de 12 assertions, avant purge, toutes attendues OK. Préparé, non exécuté. Le test après tâches devra encore vérifier les quatre tables et l’ensemble du catalogue.

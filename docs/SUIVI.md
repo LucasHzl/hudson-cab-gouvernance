@@ -125,3 +125,7 @@ Erreur de compilation signalée dans 03_masquage.sql sur l’attache groupée au
 ## Clarification des compteurs de tests — 6 novembre 2026
 
 Fichier 01 déclaré conforme par Lucas, exception de lecture sur le bloc zéro/zéro à confirmer. Fichier 02 : 655 lignes mensuelles rapportées, compteur chauffeur non vu car résultat séparé. Deux paires de SELECT regroupées en un tableau par contrôle. Pas de changement de politique ni nouvelle habilitation. Résultats détaillés marqués déclarés ou partiels dans ACCES.md ; restauration du mapping, reconstruction et vérifications après rejeu encore à confirmer.
+
+## Compteurs clarifiés, dernières vérifications avant purge — 6 novembre 2026
+
+ACCOUNTADMIN 0/0 et Queens restauré 161/365 confirmés par Lucas. Extension du mapping pas encore validée. Test 02 simplifié en un tableau final avec trois étapes ; nouveau test 04 pour reconstruction des trois tables métier et 12 contrôles synthétiques. Scripts préparés, exécution à confirmer ; aucune purge réalisée.
