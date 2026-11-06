@@ -106,3 +106,7 @@ Les entrées précédentes sont historiques ; la décision présente remplace la
 Commit local 03fdf0e : kit, veille, catalogue et preuves. Contrôle de contenu avant ajout : aucun CSV RH suivi, pas de clé ou motif de secret détecté, aucune valeur d’email/téléphone/licence du CSV dans les textes candidats. Les captures ne montrent que confirmations et métadonnées.
 
 Cahier de tests attendu rédigé avant toute politique, résultats tous non exécutés. Références de dépôts calculées localement : chauffeurs Queens 161 / Bronx 122 / Brooklyn 117 ; lignes mensuelles 365 / 290 / 259. Script 02_roles_metier.sql et migration birth_year préparés, non exécutés. DIM_DRIVER passe à 13 colonnes, le catalogue métier à 25 après migration ; les anciennes captures restent historiques. Prochain contrôle : exécuter 02 puis 01_annee_naissance et transmettre seulement le résultat agrégé.
+
+## Test rouge constaté, politiques préparées — 6 novembre 2026
+
+Capture 10_test_analyste_avant_politiques.png rangée et copie vérifiée : 400 / 0 / 400. Rôles métier et migration confirmés par Lucas ; aucune preuve de masquage après protection à ce stade. Scripts 03_masquage.sql et 04_acces_depot.sql créés après les tests committés dans aafdccd. Deux scripts de démonstration complètent le cahier : mapping temporaire et comparaison de quatre rôles. Syntaxes vérifiées contre les documents officiels ; pas de connexion Snowflake de l’assistant, validation d’exécution encore nécessaire.

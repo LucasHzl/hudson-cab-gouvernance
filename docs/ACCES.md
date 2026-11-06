@@ -1,6 +1,6 @@
 # Accès — carte des droits et cahier de tests
 
-Mis à jour le 6 novembre 2026. **Résultats attendus écrits avant les politiques. Aucun test métier déclaré vert à ce stade.** Les politiques 03/04 ne sont pas encore écrites. SQL de tests : `snowflake/gouvernance/tests/01_tests_acces.sql`. Exécuter les blocs séparément, surtout les refus attendus.
+Mis à jour le 6 novembre 2026. **Résultats attendus écrits avant les politiques. Aucun test métier déclaré vert à ce stade.** Les politiques 03/04 sont maintenant préparées après le commit des tests ; exécution non confirmée. SQL de tests : `snowflake/gouvernance/tests/01_tests_acces.sql`. Exécuter les blocs séparément, surtout les refus attendus.
 
 ## 1. Propriété et droits
 
@@ -68,6 +68,7 @@ Tous les tests suivants sont **non exécutés** sauf mention ultérieure. Les r�
 
 | Test | Rôle / opération | Attendu après politiques | Obtenu | Statut |
 |---|---|---|---|---|
+| A00 | ANALYSTE, test avant politiques | Cible finale : 400 chauffeurs / 400 prénoms masqués / 0 date complète | Capture : 400 / 0 / 400 | ROUGE observé avant protection |
 | A01 | RH_PAIE, comptages | 400 chauffeurs, 914 lignes mensuelles, valeurs autorisées en clair | Non exécuté | À faire |
 | A02 | RESP_DEPOT_QUEENS | 161 chauffeurs, 365 lignes mensuelles ; aucun autre dépôt | Non exécuté | À faire |
 | A03 | RESP_DEPOT_BRONX | 122 chauffeurs, 290 lignes mensuelles ; aucun autre dépôt | Non exécuté | À faire |
@@ -100,3 +101,15 @@ Les assertions de valeurs réelles se font localement dans Snowflake sans copier
 5. Ranger les preuves publiques sans données du personnel, indiquer la date et le rôle de chaque exécution.
 
 Sources : contrat §4 ; guide jour 2 ; documentation officielle Snowflake [GRANT](https://docs.snowflake.com/en/sql-reference/sql/grant-privilege), consultée le 6 novembre 2026.
+
+## 6. Résultat avant politiques et implémentation préparée
+
+Capture `10_test_analyste_avant_politiques.png`, reçue le 6 novembre 2026 : 400 chauffeurs, zéro prénom masqué, 400 dates complètes visibles. Test rouge observé sur l’état avant protection ; il ne valide pas les accès finaux. Lucas confirme l’exécution des rôles et de la migration ; vérification de la migration déclarée correcte, sans capture dédiée.
+
+Implémentation préparée : 03_masquage.sql associe au tag une politique VARCHAR, DATE et NUMBER ; l’exception identifiant_interne ne concerne que les rôles métier autorisés, pas tous les rôles du compte. TRANSFORMER et RH_PAIE ont les valeurs nécessaires en clair. Des politiques directes DATE/FLOAT/NUMBER/BOOLEAN protègent aussi les attributs sans catégorie de tag adaptée. Le dépôt reste la clé de la politique par ligne ; on ne lui attache pas simultanément un masque.
+
+04_acces_depot.sql crée la correspondance et une politique appliquée aux quatre tables RH, RAW compris pour ne laisser aucune ligne aux administrateurs. Le mapping est initialisé par MERGE sans effacer les ajouts. La politique se modifie avec ALTER SET BODY ; au rejeu, une attache déjà correcte est conservée, une attache étrangère provoque une erreur. Aucun rôle métier ne reçoit de droits RAW/STAGING.
+
+Scripts complémentaires : tests/02_test_mapping.sql démontre l’ajout temporaire d’un dépôt (rollback du changement) ; tests/03_demo_quatre_roles.sql rejoue une même requête agrégée pour quatre rôles. Tous les résultats après protection restent non exécutés tant que Lucas n’en transmet pas les preuves. Aucune valeur nominative attendue ni obtenue publiée.
+
+Références techniques consultées le 6 novembre 2026 : [ALTER TAG](https://docs.snowflake.com/en/sql-reference/sql/alter-tag), [ALTER COLUMN](https://docs.snowflake.com/en/sql-reference/sql/alter-table-column), [politiques de lignes](https://docs.snowflake.com/en/user-guide/security-row-intro), [POLICY_REFERENCES](https://docs.snowflake.com/en/sql-reference/functions/policy_references).

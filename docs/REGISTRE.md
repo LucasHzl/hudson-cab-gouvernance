@@ -125,3 +125,7 @@ Ce que votre mise en œuvre ne couvre pas : deux ou trois lignes, sans détour.
 ## Évolution préparée — année de naissance
 
 Migration 01_annee_naissance.sql préparée, non exécutée : ajout de MARTS.DIM_DRIVER.birth_year depuis YEAR(birth_date). C’est une donnée personnelle calculée, tag date_naissance, destinée à ANALYSTE et RH_PAIE ; la date complète reste masquée à ANALYSTE. Cette copie doit aussi disparaître lors de la purge. Le SQL de reconstruction et la fiche du catalogue ont été adaptés ; aucune table recréée.
+
+## Protections préparées — 6 novembre 2026
+
+Retour de Lucas : migration birth_year exécutée. Test rouge sur capture avant politique : accès encore trop large pour ANALYSTE. Masquage et filtre par dépôt désormais préparés dans les scripts 03/04, non confirmés exécutés ; les preuves finales d’accès et de purge restent à compléter. Les colonnes sans tag de nature adapté reçoivent aussi des protections directes, sauf depot, protégé par la règle de lignes et le périmètre de privilèges.
