@@ -110,3 +110,9 @@ Cahier de tests attendu rédigé avant toute politique, résultats tous non exé
 ## Test rouge constaté, politiques préparées — 6 novembre 2026
 
 Capture 10_test_analyste_avant_politiques.png rangée et copie vérifiée : 400 / 0 / 400. Rôles métier et migration confirmés par Lucas ; aucune preuve de masquage après protection à ce stade. Scripts 03_masquage.sql et 04_acces_depot.sql créés après les tests committés dans aafdccd. Deux scripts de démonstration complètent le cahier : mapping temporaire et comparaison de quatre rôles. Syntaxes vérifiées contre les documents officiels ; pas de connexion Snowflake de l’assistant, validation d’exécution encore nécessaire.
+
+## Point d’avancement et correctif — 6 novembre 2026
+
+Estimation indicative : environ 45 % du projet, selon le travail exécuté et prouvé, pas une note ni un calcul officiel des compétences. Veille/inventaire et pipeline initial avancés ; accès en validation ; conservation, qualité, tâches, audit et démonstration finale encore à réaliser.
+
+Erreur de compilation signalée dans 03_masquage.sql sur l’attache groupée au tag. Correction en trois ALTER TAG distincts, conservation de FORCE pour le rejeu. Aucune politique ni attache existante supprimée. Résultat d’exécution du correctif à attendre avant de continuer le cahier de tests.

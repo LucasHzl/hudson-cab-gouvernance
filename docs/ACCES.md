@@ -113,3 +113,7 @@ Implémentation préparée : 03_masquage.sql associe au tag une politique VARCHA
 Scripts complémentaires : tests/02_test_mapping.sql démontre l’ajout temporaire d’un dépôt (rollback du changement) ; tests/03_demo_quatre_roles.sql rejoue une même requête agrégée pour quatre rôles. Tous les résultats après protection restent non exécutés tant que Lucas n’en transmet pas les preuves. Aucune valeur nominative attendue ni obtenue publiée.
 
 Références techniques consultées le 6 novembre 2026 : [ALTER TAG](https://docs.snowflake.com/en/sql-reference/sql/alter-tag), [ALTER COLUMN](https://docs.snowflake.com/en/sql-reference/sql/alter-table-column), [politiques de lignes](https://docs.snowflake.com/en/user-guide/security-row-intro), [POLICY_REFERENCES](https://docs.snowflake.com/en/sql-reference/functions/policy_references).
+
+### Erreur de compilation du masquage — 6 novembre 2026
+
+Lucas signale une erreur de syntaxe sur la deuxième politique du bloc d’attache groupée au tag (ligne 42 de la version initiale). Correctif local : trois instructions ALTER TAG SET MASKING POLICY distinctes avec FORCE, une par type. L’exécution initiale a pu créer les premières politiques sans les attacher ; le script peut être repris depuis le début. Statut : correctif préparé, compilation et tests après protection à confirmer. Aucun test vert ajouté sur cette seule correction.
