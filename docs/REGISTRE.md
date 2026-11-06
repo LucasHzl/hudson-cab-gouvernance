@@ -90,15 +90,19 @@ Chaque réponse de la colonne de droite doit pouvoir être vérifiée dans l'ent
 
 | Catégorie de données | Colonnes concernées | Tables où elles se trouvent |
 |---|---|---|
-| Identité | | |
-| Coordonnées | | |
-| Vie professionnelle | | |
+| Identité | driver_id, first_name, last_name, birth_date, birth_year, tlc_license_number, driver_name calculé | RAW.DRIVERS ; MARTS.DIM_DRIVER ; identifiant et nom calculé dans MART_DRIVER_MONTHLY ; driver_id dans RAW.DRIVER_SHIFTS |
+| Coordonnées | email, phone | RAW.DRIVERS, MARTS.DIM_DRIVER |
+| Vie professionnelle | depot lié au chauffeur, hire_date, end_date, is_active, tenure_years ; services, dates et mesures d’activité reliées à driver_id | RAW.DRIVERS, RAW.DRIVER_SHIFTS, MARTS.DIM_DRIVER, MARTS.MART_DRIVER_MONTHLY ; vues STAGING dérivées |
 
 ### Qui y accède
 
 | Rôle | Ce qu'il voit | Pourquoi il en a besoin | Preuve (requête ou test) |
 |---|---|---|---|
-| | | | |
+| RH_PAIE | Tous les dépôts, valeurs en clair | Paie | Cahier ACCES.md et capture 03a |
+| RESP_DEPOT_QUEENS / RESP_DEPOT_BRONX | Leur dépôt, identité et téléphone selon matrice ; autres attributs protégés | Organisation du dépôt | ACCES.md, mapping et tests par rôle |
+| ANALYSTE | Tous les dépôts, identifiant interne et année de naissance ; identité masquée | Analyse d’activité | Captures 03c et 15 |
+| TRANSFORMER | Sources et copies en clair | Chargement, purge, qualité, reconstruction | Captures 13 à 23 et tests de fidélité |
+| GOUVERNANCE / ACCOUNTADMIN | Gouvernance : pas de SELECT RH ; administrateur : zéro ligne dans les tests | Configuration ou audit des métadonnées | ACCES.md et captures 03d, 15 ; ne constitue pas une protection contre la modification malveillante des règles par un administrateur |
 
 ### Combien de temps
 
@@ -114,9 +118,9 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 
 | Question | Réponse | Preuve |
 |---|---|---|
-| Peut-on dire qui a lu ces données la semaine dernière ? | | |
+| Peut-on dire qui a lu ces données la semaine dernière ? | Audit préparé sur sept jours ; résultat encore à vérifier, latence possible de trois heures. | 06_audit.sql (rôles, capture publique), 06b_audit_detail_prive.sql (comptes, consultation privée) |
 | Sait-on quand une donnée est fausse ? | Trois règles exécutées : 4 licences et 7 emails en ALERTE, 25 services orphelins sous le seuil bloquant 50 ; elles ne garantissent pas toute l’exactitude. | rh/qualite_rh.sql et futurs résultats QUALITE_RESULTATS |
-| Que se passe-t-il si le rôle des outils est compromis ? | | |
+| Que se passe-t-il si le rôle des outils est compromis ? | TRANSFORMER dispose des données en clair et possède les tables : compromission critique, les règles actuelles ne suffisent pas contre leur propriétaire malveillant. Suspendre les tâches, retirer les habilitations du compte compromis, renouveler ses accès et examiner les journaux. | Privilèges d’installation, mapping TRANSFORMER et politiques ; réponse à incident proposée, non exercée |
 
 ### Limites connues
 
@@ -161,3 +165,9 @@ Captures 17_graphe_taches.png et 18_historique_t_purge.png rangées : structure 
 ### Blocage qualité prouvé — 6 novembre 2026
 
 Captures 19 à 21 conservées : succès du graphe complet initial, puis échec qualité au seuil temporaire 0, reconstruction non démarrée et mesures conservées (25 services orphelins / 0 / ALERTE). T05 validé par les résultats observés. Le rétablissement du seuil normal à 50 et la nouvelle chaîne réussie restent à confirmer avec tests/08_retablir_seuil.sql puis les scripts rh de lancement, suivi et consultation qualité. Audit et lignage restent à réaliser.
+
+### Seuil rétabli et audit préparé — 6 novembre 2026
+
+Captures 22 et 23 : retour à trois tâches réussies et seuil 50, test T06 validé. Exécuter snowflake/gouvernance/06_audit.sql avec ACCOUNTADMIN : capture publique des rôles, objets, colonnes et comptes de requêtes. 06b_audit_detail_prive.sql permet l’identification des comptes utilisateurs uniquement dans Snowflake ; ne pas publier sa sortie. Ces deux scripts sont préparés, non exécutés. Audit limité aux sept derniers jours, délai ACCESS_HISTORY jusqu’à trois heures ; une lecture référencée ne démontre pas que la valeur était affichée en clair. Documentation : https://docs.snowflake.com/en/sql-reference/account-usage/access_history et https://docs.snowflake.com/en/sql-reference/account-usage/query_history (consultées le 6 novembre 2026).
+
+Capture restante : sous TRANSFORMER, Catalog → Explorer → NYC_TAXI → MARTS → MART_DRIVER_MONTHLY → Lineage. Déplier les sources amont pour présenter le chemin RAW → STAGING → MARTS ; graphe automatique à observer avant de le déclarer validé. Documentation : https://docs.snowflake.com/en/user-guide/ui-snowsight-lineage.

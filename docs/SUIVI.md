@@ -163,3 +163,9 @@ Captures 17_graphe_taches.png et 18_historique_t_purge.png rangées : structure 
 ### Blocage qualité prouvé — 6 novembre 2026
 
 Captures 19 à 21 conservées : succès du graphe complet initial, puis échec qualité au seuil temporaire 0, reconstruction non démarrée et mesures conservées (25 services orphelins / 0 / ALERTE). T05 validé par les résultats observés. Le rétablissement du seuil normal à 50 et la nouvelle chaîne réussie restent à confirmer avec tests/08_retablir_seuil.sql puis les scripts rh de lancement, suivi et consultation qualité. Audit et lignage restent à réaliser.
+
+### Seuil rétabli et audit préparé — 6 novembre 2026
+
+Captures 22 et 23 : retour à trois tâches réussies et seuil 50, test T06 validé. Exécuter snowflake/gouvernance/06_audit.sql avec ACCOUNTADMIN : capture publique des rôles, objets, colonnes et comptes de requêtes. 06b_audit_detail_prive.sql permet l’identification des comptes utilisateurs uniquement dans Snowflake ; ne pas publier sa sortie. Ces deux scripts sont préparés, non exécutés. Audit limité aux sept derniers jours, délai ACCESS_HISTORY jusqu’à trois heures ; une lecture référencée ne démontre pas que la valeur était affichée en clair. Documentation : https://docs.snowflake.com/en/sql-reference/account-usage/access_history et https://docs.snowflake.com/en/sql-reference/account-usage/query_history (consultées le 6 novembre 2026).
+
+Capture restante : sous TRANSFORMER, Catalog → Explorer → NYC_TAXI → MARTS → MART_DRIVER_MONTHLY → Lineage. Déplier les sources amont pour présenter le chemin RAW → STAGING → MARTS ; graphe automatique à observer avant de le déclarer validé. Documentation : https://docs.snowflake.com/en/user-guide/ui-snowsight-lineage.

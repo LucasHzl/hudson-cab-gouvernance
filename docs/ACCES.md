@@ -188,7 +188,7 @@ Capture 06_resultats_qualite_manuels.png : trois mesures enregistrées au même 
 | T03, qualité par tâche | Trois nouvelles mesures, 4/7/25 et ALERTE/ALERTE/OK | Capture 16 : 4/7/25 conformes, mesure à 14:52:36.203 telle qu’affichée | VERT observé |
 | T04, contrôles après tâche | 18 contrôles OK : masques/filtre des quatre tables, descriptions, rétention, source et accès | Capture 15 : 18 lignes OK, 354 chauffeurs après purge | VERT observé |
 | T05, règle bloquante | Mesure de service_rattache supérieure au seuil de test : T_QUALITE FAILED, T_TABLES non démarrée, résultat enregistré | Captures 20 et 21 : purge réussie, qualité FAILED, reconstruction NON_DEMARREE ; 25 / 0 / ALERTE enregistré | VERT observé |
-| T06, rétablissement | Seuil contractuel 50 rétabli et nouvelle chaîne réussie | Non exécuté | À faire |
+| T06, rétablissement | Seuil contractuel 50 rétabli et nouvelle chaîne réussie | Captures 22/23 : trois SUCCEEDED, service_rattache 25 / 50 / OK | VERT observé |
 
 La racine est prévue chaque jour à 05:00 Europe/Paris ; ses enfants n’ont pas d’horaire propre. Le rôle propriétaire détermine les accès, pas celui qui regarde l’interface. Les scripts de création laissent le graphe suspendu ; lancer_taches_rh.sql l’active et demande une exécution. Consulter suivi_taches_rh.sql pour le statut, sans redemander une exécution. Suspendre la racine à la fin du brief.
 
@@ -209,3 +209,14 @@ Test T05 préparé dans tests/07_preparer_blocage.sql : changer seulement le seu
 ### Blocage qualité observé — 6 novembre 2026
 
 [Capture 19](19_succes_graphe_complet.png) : vue Task Graph, exécution réussie de 14:52:31, durée 11 s ; complète la structure graphique de la capture 17. [Capture 20](20_blocage_qualite_chaine.png) : groupe 8be744ce-6b4c-415d-84be-78c61bd5e01d, purge SUCCEEDED, qualité FAILED, reconstruction NON_DEMARREE, de 15:13:04.922 à 15:13:09.796 (+0100). Le message d’erreur est tronqué dans la grille ; le nom complet de l’exception n’est pas lisible. [Capture 21](21_mesures_qualite_seuil_zero.png) : mesures durables à 15:13:08.247 tel qu’affiché, dont service_rattache 25 / seuil 0 / ALERTE. Le résultat fonctionnel attendu est confirmé, aucune reconstruction n’a démarré dans ce groupe. T06 reste à exécuter : rétablir 50 avec 08_retablir_seuil.sql, lancer une chaîne puis vérifier trois succès et la qualité 25 / 50 / OK.
+
+### Rétablissement confirmé et audit à exécuter
+
+Captures [22](22_chaine_retablie_seuil_50.png) et [23](23_qualite_retablie_seuil_50.png) : groupe ea194c1c-d964-4b67-99de-b0a1067bbe75, trois SUCCEEDED de 15:36:42.723 à 15:36:56.667 (+0100). Mesure 15:36:50.618 telle qu’affichée, service_rattache 25 / 50 / OK, emails 7 et licences 4 en ALERTE. T06 observé conforme.
+
+| Test d’audit | Attendu | Obtenu |
+|---|---|---|
+| AU01 | 06_audit.sql : objets/colonnes de DIM_DRIVER, rôles et comptages sur sept jours, jointure query_id | En attente d’exécution |
+| AU02 | 06b_audit_detail_prive.sql : utilisateurs et rôles consultables dans Snowflake sans publication du résultat | En attente d’exécution |
+
+La capture publique attendue provient uniquement de 06_audit.sql. Historique retardé jusqu’à trois heures ; ne pas conclure à une absence d’accès à partir d’un résultat vide. Une colonne référencée peut être masquée ou une requête ne renvoyer aucune ligne : les historiques ne prouvent pas à eux seuls une divulgation en clair. Les transformations qui lisent la dimension figurent aussi dans les résultats, avec leur type de requête.
