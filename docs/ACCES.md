@@ -69,13 +69,13 @@ Les volumes après purge évoluent avec la date ; les tests 02 et 10 calculent l
 | A00, avant politiques | Identifier l’exposition excessive de l’analyste | 400 chauffeurs, zéro prénom masqué, 400 dates complètes, capture 10 | ROUGE initial prouvé |
 | A01, RH_PAIE | Tous dépôts en clair | Démo 400/0/400/400, capture 03a ; tests détaillés du fichier 01 consignés conformes | Conforme, preuve agrégée |
 | A02, Queens | Queens seulement, identité/téléphone autorisés | Démo 161/0/0/0, capture 03b ; mapping final 143/365, capture 24 | Conforme, preuve agrégée |
-| A03, Bronx | Bronx seulement, identité/téléphone autorisés | Test du fichier 01 consigné conforme ; pas de capture dédiée | Prouvé par la recette 10, capture 27 (avant D01) |
+| A03, Bronx | Bronx seulement, identité/téléphone autorisés | Test du fichier 01 consigné conforme ; pas de capture dédiée | Prouvé par la recette 10, captures 27 puis 30 après D01 |
 | A04, ANALYSTE | Tous dépôts, identité masquée, année seule | Démo 400/400/0/400, capture 03c ; après purge 354 prénoms masqués, capture 26 | Conforme, preuve agrégée |
-| A05, GOUVERNANCE/DIM_DRIVER | Refus d’autorisation | Test du fichier 01 consigné conforme | Prouvé par la recette 10, capture 27 (avant D01) |
+| A05, GOUVERNANCE/DIM_DRIVER | Refus d’autorisation | Test du fichier 01 consigné conforme | Prouvé par la recette 10, captures 27 puis 30 après D01 |
 | A06, ACCOUNTADMIN | Aucune ligne DIM_DRIVER et RAW.DRIVER_SHIFTS | Compteurs 0/0 consignés ; zéro DIM_DRIVER sur captures 03d et 26 | Conforme, preuve agrégée |
-| A07-A08, métiers sur RAW | Refus d’autorisation | Test du fichier 01 consigné conforme | Prouvé par la recette 10, capture 27 (avant D01) |
-| A09, référentiel | Trois dépôts pour les quatre métiers | Tests du fichier 01 consignés conformes | Prouvé par la recette 10, capture 27 (avant D01) |
-| A10-A11, masques complémentaires | Matrice complète, mensuel compris | Tests du fichier 01 consignés conformes ; captures partielles 03 | Prouvé par la recette 10, capture 27 (avant D01) |
+| A07-A08, métiers sur RAW | Refus d’autorisation | Test du fichier 01 consigné conforme | Prouvé par la recette 10, captures 27 puis 30 après D01 |
+| A09, référentiel | Trois dépôts pour les quatre métiers | Tests du fichier 01 consignés conformes | Prouvé par la recette 10, captures 27 puis 30 après D01 |
+| A10-A11, masques complémentaires | Matrice complète, mensuel compris | Tests du fichier 01 consignés conformes ; captures partielles 03 | Prouvé par la recette 10, captures 27 puis 30 après D01 |
 | A12, catalogue | 25 colonnes/3 tables, descriptions présentes, accès métier | Test du fichier 01 consigné conforme ; 25 lignes accessibles, capture 26 | Conforme, preuve agrégée |
 | A13, fidélité pipeline | Emails non masqués et égaux à STAGING | Zéro masque et zéro écart, capture 26 | Prouvé |
 | A14, rejeu des politiques | Pas de perte des règles | 18 contrôles OK après rejeu 03/04, capture 26 | Prouvé |
@@ -120,8 +120,21 @@ Les scripts 01 et 04 conservent les références initiales avant purge. Après p
 
 Avant extension : couverture attendue 39 colonnes personnelles sur quatre tables, zéro écart et 21 colonnes personnelles taguées dans le catalogue métier (25 colonnes au total). Attentes dans tests/12_couverture_tags.sql. Après migration, rejouer également tests/10_recette_complete.sql : 69 contrôles toujours attendus conformes, sans changement de la matrice des accès. Les résultats antérieurs ne valent pas validation de la migration.
 
-## Nouvelle classification — contrôles en attente
+## Nouvelle classification — contrôles validés
 
 La décision D01 ajoute deux catégories et remplace les anciens liens automatiques tag/masque par des attaches directes. La politique textuelle continue de lire le tag ; les quatre DEPOT sont classés sans masque et restent filtrés. Aucun rôle, privilège ni corps métier des masques n’est élargi. Les 35 colonnes masquées restent réparties 9/7/12/7 sur les quatre tables.
 
-Migration autonome : 05_completer_tags.sql. Puis 12_couverture_tags.sql (39 colonnes, quatre tables et catalogue, cinq lignes OK) et 10_recette_complete.sql (69 conformités sur huit rôles). L’état validé par la capture 27 précède cette évolution ; une nouvelle preuve est nécessaire avant de cocher la couverture et la non-régression.
+Migration autonome 05_completer_tags.sql exécutée. Test 12 : cinq lignes OK, 13/8/10/8 colonnes conformes pour les quatre tables, soit 39, et 21 colonnes personnelles dans le catalogue métier (capture 29). Test 10 : 69 conformités, huit rôles, zéro échec après migration (capture 30). Les vues 31a/31b montrent les 13 colonnes de DIM_DRIVER, leurs descriptions et tags. La capture 27 conserve l’état de référence avant évolution ; 30 prouve l’état actuel.
+
+## Bilan de couverture après migration
+
+| Contrôle | Attendu | Obtenu | État |
+|---|---|---|---|
+| CLASS01, DIM_DRIVER | 13 colonnes personnelles taguées et décrites | 13/13, zéro écart, capture 29 ; vue détaillée 31a/31b | Prouvé |
+| CLASS02, mensuel | 8 colonnes personnelles taguées et décrites | 8/8, zéro écart, capture 29 | Prouvé |
+| CLASS03, RAW.DRIVERS | 10 colonnes personnelles taguées et décrites | 10/10, zéro écart, capture 29 | Prouvé |
+| CLASS04, RAW.DRIVER_SHIFTS | 8 colonnes personnelles taguées et décrites | 8/8, zéro écart, capture 29 | Prouvé |
+| CLASS05, catalogue métier | 21 colonnes personnelles dans 25 lignes, aucun manque | 21/21, zéro écart, capture 29 | Prouvé |
+| CLASS06, non-régression | 69 contrôles conformes sur huit rôles | 69/69, zéro échec, capture 30 | Prouvé |
+
+Aucune réactivation des tâches n’est incluse dans la migration ni ces deux tests. Les dates et volumes de référence avant purge restent historiques ; les recettes dynamiques représentent l’état actuel. L’extension des deux valeurs est justifiée dans DECISIONS.md et n’est pas présentée comme une approbation externe.

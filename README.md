@@ -8,7 +8,7 @@ Entrepôt pédagogique sur Snowflake Enterprise, AWS Paris : catalogue, accès p
 
 Au 6 novembre 2026 : pipeline chargé, accès et mapping testés, purge 400 → 354, rétention un jour, chaîne quotidienne réussie, blocage qualité puis rétablissement prouvés, audit et lignage capturés. Dix-huit contrôles sont verts après reconstruction et après rejeu des politiques.
 
-Le contrôle critère par critère est dans [CONTROLE_RENDU.md](docs/CONTROLE_RENDU.md). Les recettes renforcées sont prouvées : 69 assertions d’accès et six assertions de rejeu, zéro échec (captures 27/28). Une extension de classification est maintenant préparée pour couvrir les 39 colonnes personnelles ; sa migration et ses tests restent à exécuter. Le critère de couverture C20 ne sera coché qu’après cette preuve. Les bonus ne font pas partie du périmètre.
+Le contrôle critère par critère est dans [CONTROLE_RENDU.md](docs/CONTROLE_RENDU.md). Les recettes renforcées sont prouvées : 69 assertions d’accès et six assertions de rejeu, zéro échec (captures 27/28). L’extension de classification est exécutée : 39 colonnes personnelles couvertes, zéro écart (capture 29), et 69 contrôles d’accès de nouveau conformes après migration (capture 30). La couverture C20 est prouvée avec l’extension de taxonomie D01 explicitement documentée. Les bonus ne font pas partie du périmètre.
 
 ## Gouvernance
 
@@ -23,7 +23,7 @@ Les dix colonnes RH, les huit colonnes des services et leurs dérivations sont p
 - GOUVERNANCE : règles et métadonnées, pas de SELECT sur le personnel.
 - ACCOUNTADMIN et SYSADMIN : zéro ligne personnelle avec le mapping actuel. Leurs pouvoirs de reconfiguration restent une limite.
 
-La politique de lignes utilise CURRENT_ROLE et ACCES_DEPOT ; le lecteur n’a pas besoin de lire le mapping. Les rôles secondaires sont désactivés dans les tests. Classification par tag sur toutes les colonnes personnelles ; masques attachés directement aux colonnes à protéger. La politique textuelle consulte leur catégorie. DEPOT reste sans masque car il est la clé du filtre. Cette évolution est préparée, à valider par les tests de migration. Les dates, nombres et booléens masqués deviennent NULL ; les textes deviennent [MASQUE] en conservant les NULL sources. Matrice et carte des privilèges : [ACCES.md](docs/ACCES.md).
+La politique de lignes utilise CURRENT_ROLE et ACCES_DEPOT ; le lecteur n’a pas besoin de lire le mapping. Les rôles secondaires sont désactivés dans les tests. Classification par tag sur toutes les colonnes personnelles ; masques attachés directement aux colonnes à protéger. La politique textuelle consulte leur catégorie. DEPOT reste sans masque car il est la clé du filtre. Cette évolution est validée par les captures 29 et 30. Les dates, nombres et booléens masqués deviennent NULL ; les textes deviennent [MASQUE] en conservant les NULL sources. Matrice et carte des privilèges : [ACCES.md](docs/ACCES.md).
 
 ### Installation depuis un compte vide
 
@@ -56,7 +56,7 @@ Prérequis : Snowflake Enterprise, fichiers drivers.csv et driver_shifts.csv dis
 | 23 | tests/02_test_mapping.sql, tests/09_stage_vide.sql | Références dynamiques avant/après purge, extension temporaire puis restauration ; stage zéro fichier |
 | 24 | Rejouer 03_masquage.sql et 04_acces_depot.sql, puis tests/06_verifier_apres_taches.sql | Dix-huit contrôles verts après rejeu des règles, capture 26 |
 | 25 | tests/10_recette_complete.sql puis tests/11_rejeu_chargement.sql | Recettes finales dynamiques prouvées : 69 assertions sur huit rôles, puis deux rejeux et six assertions, captures 27/28 |
-| 25 bis | Sur l’installation existante : snowflake/gouvernance/05_completer_tags.sql, puis tests/12_couverture_tags.sql et tests/10_recette_complete.sql | Migration autonome, sans lancement de tâches ; attendus cinq lignes de couverture OK puis 69 assertions conformes. Sur compte neuf, les huit catégories, fiches complètes et masques directs sont déjà dans les scripts 01/03 et catalogue ; la migration peut être rejouée |
+| 25 bis | Sur l’installation existante : snowflake/gouvernance/05_completer_tags.sql, puis tests/12_couverture_tags.sql et tests/10_recette_complete.sql | Migration autonome, sans lancement de tâches ; cinq lignes de couverture OK puis 69 assertions conformes observées, captures 29/30. Sur compte neuf, les huit catégories, fiches complètes et masques directs sont déjà dans les scripts 01/03 et catalogue ; la migration peut être rejouée |
 | 26 | snowflake/rh/suspendre_taches_rh.sql après la dernière exécution terminée | Suspend les prochains départs quotidiens sans supprimer les objets |
 
 Ne pas relancer le chargement initial ou les références à 400 pour « réparer » un résultat après purge. Les tests 02, 06, 10 et 11 s’adaptent à l’état courant. Le test Time Travel enregistre un nouvel instant à chaque rejeu : la première capture à 400 reste la preuve de la purge initiale.
@@ -93,7 +93,7 @@ Le lignage montre DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS vers MART_DRIVER_M
 
 ### Écarts au contrat et limites
 
-1. **Extension documentée de la taxonomie** : les six catégories initiales ne couvrent pas vingt attributs personnels. La décision D01 ajoute donnee_professionnelle et activite, avec dix affectations chacune, sans changer les noms des trois tags ni la matrice des accès. Cette extension s’écarte littéralement des valeurs initiales du contrat ; la justification et les tests figurent dans [DECISIONS.md](docs/DECISIONS.md). Couverture visée : 39 colonnes, zéro manque ; migration préparée, non encore prouvée.
+1. **Extension documentée de la taxonomie** : les six catégories initiales ne couvrent pas vingt attributs personnels. La décision D01 ajoute donnee_professionnelle et activite, avec dix affectations chacune, sans changer les noms des trois tags ni la matrice des accès. Cette extension s’écarte littéralement des valeurs initiales du contrat ; la justification et les tests figurent dans [DECISIONS.md](docs/DECISIONS.md). Couverture observée : 39 colonnes, zéro manque ; migration et stabilité des lectures prouvées par les captures 29/30. Les captures 31a/31b montrent les 13 colonnes de DIM_DRIVER taguées.
 2. **Cinq ans uniformes non justifiés par catégorie** : règle appliquée pour l’exercice ; base légale et durée par usage à établir. Les contrats new-yorkais ne relèvent pas automatiquement des durées RH françaises du référentiel CNIL du 2 avril 2026.
 3. **Base active et archive non distinguées** : accès aux anciens chauffeurs maintenus selon le contrat ; proposer archive restreinte et durées par finalité.
 4. **Rétention technique** : Time Travel, Fail-safe et copies annexes distincts ; pas d’essai d’effacement physique après huit jours.

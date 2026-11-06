@@ -62,9 +62,9 @@ Les colonnes techniques _source_file et _loaded_at sont ajoutées par le chargem
 
 ### Classification complète et extension du contrat
 
-Les six catégories d’origine couvrent identité, coordonnées et identifiants. La décision D01 ajoute donnee_professionnelle et activite pour les vingt attributs restants, y compris les calculs is_active, tenure_years, activity_month et les mesures mensuelles. driver_name relève toujours de nom et birth_year de date_naissance. L’objectif est de classer les 39 colonnes personnelles des quatre tables ; les quatre colonnes de DIM_DEPOT et les quatre métadonnées d’ingestion ne sont pas personnelles dans ce contenu.
+Les six catégories d’origine couvrent identité, coordonnées et identifiants. La décision D01 ajoute donnee_professionnelle et activite pour les vingt attributs restants, y compris les calculs is_active, tenure_years, activity_month et les mesures mensuelles. driver_name relève toujours de nom et birth_year de date_naissance. La couverture observée est de 39 colonnes personnelles sur les quatre tables ; les quatre colonnes de DIM_DEPOT et les quatre métadonnées d’ingestion ne sont pas personnelles dans ce contenu.
 
-L’extension est explicite, documentée dans DECISIONS.md ; le contrat initial reste disponible sans réécriture. Le tag classe, les politiques directes protègent et la RAP filtre. DEPOT est tagué mais ne reçoit pas de masque. Migration préparée : résultat de couverture et non-régression à consigner après les tests 12 et 10.
+L’extension est explicite, documentée dans DECISIONS.md ; le contrat initial reste disponible sans réécriture. Le tag classe, les politiques directes protègent et la RAP filtre. DEPOT est tagué mais ne reçoit pas de masque. Migration exécutée : couverture 39/39 et zéro écart, capture 29 ; 69 contrôles de lecture conformes après migration, capture 30 ; tags de DIM_DRIVER visibles sur les captures 31a/31b.
 
 ### Ce qui a surpris
 
@@ -125,7 +125,7 @@ Délai réel entre l'exécution de la purge et la disparition définitive d'une 
 
 ### Limites connues
 
-La taxonomie initiale a motivé une extension de deux catégories documentée dans DECISIONS.md ; sa couverture complète attend encore la preuve de migration. La durée uniforme de cinq ans nécessite une justification par finalité et une décision sur l’archivage. Time Travel et Fail-safe empêchent d’assimiler la purge à un effacement physique immédiat ; copies externes hors périmètre. Les rôles administratifs et le propriétaire des tables peuvent reconfigurer le système : les tests ne constituent pas une protection contre un administrateur malveillant.
+La taxonomie initiale a motivé une extension de deux catégories documentée dans DECISIONS.md ; sa couverture complète est prouvée par la capture 29, avec non-régression des accès en capture 30. La durée uniforme de cinq ans nécessite une justification par finalité et une décision sur l’archivage. Time Travel et Fail-safe empêchent d’assimiler la purge à un effacement physique immédiat ; copies externes hors périmètre. Les rôles administratifs et le propriétaire des tables peuvent reconfigurer le système : les tests ne constituent pas une protection contre un administrateur malveillant.
 
 
 ## Preuves de mise en œuvre
@@ -143,7 +143,7 @@ La taxonomie initiale a motivé une extension de deux catégories documentée da
 | Lignage | DIM_DRIVER et STAGING.STG_RH__DRIVER_SHIFTS alimentent le mensuel | Capture 04 |
 | Stage | Zéro fichier | Capture 25 |
 
-Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu des politiques initiales validé par la capture 26 ; 69 contrôles d’accès et six contrôles de rejeu validés par les captures 27/28. La nouvelle classification et les masques directs restent à vérifier après migration avec les tests 12 et 10.
+Une colonne référencée dans l’audit ne prouve pas une valeur visible en clair. La dépendance V_CATALOGUE visible dans le lignage ne constitue pas une preuve de copie de valeurs personnelles. Rejeu des politiques initiales validé par la capture 26 ; 69 contrôles d’accès et six contrôles de rejeu validés par les captures 27/28. La nouvelle classification et les masques directs sont validés après migration par les tests 12 et 10, captures 29/30.
 
 ### Destinataires, transferts et droits
 

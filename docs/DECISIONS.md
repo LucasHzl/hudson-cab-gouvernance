@@ -2,7 +2,7 @@
 
 ## D01 — Couvrir toutes les données personnelles dans le catalogue
 
-Date : 6 novembre 2026. État : choix de conception retenu, migration préparée ; validation Snowflake en attente.
+Date : 6 novembre 2026. État : décision implémentée et validée dans Snowflake ; couverture complète et lectures conformes prouvées par les captures 29 à 31.
 
 ### Problème
 
@@ -32,6 +32,6 @@ La politique textuelle continue de consulter la valeur de DONNEE_PERSONNELLE pou
 - Les quatre fiches personnelles du catalogue rétablissent les 39 affectations ; les métadonnées d’ingestion et DIM_DEPOT ne sont pas classées personnelles.
 - 05_completer_tags.sql est une migration autonome, avec une copie exacte du nouveau masquage et des quatre fiches ; aucune tâche n’est relancée.
 - tests/12_couverture_tags.sql précède la migration dans Git (ffeb584). Attendu : 10/8/13/8 colonnes conformes, zéro écart ; 21 colonnes personnelles dans les 25 lignes du catalogue métier.
-- tests/10_recette_complete.sql doit encore produire 69 conformités sur huit rôles après migration. Les captures 27/28 prouvent les recettes avant extension, pas cette nouvelle version.
+- tests/10_recette_complete.sql produit 69 conformités sur huit rôles après migration, capture 30. La capture 29 confirme 39/39 colonnes classées et zéro écart ; les captures 31a/31b montrent les 13 colonnes de DIM_DRIVER. Les captures 27/28 restent les preuves avant extension et du rejeu du chargement.
 
 Sources techniques consultées le 6 novembre 2026 : [ALTER TAG](https://docs.snowflake.com/en/sql-reference/sql/alter-tag), [masquage lié aux tags et limites avec les politiques de lignes](https://docs.snowflake.com/en/user-guide/tag-based-masking-policies), [POLICY_REFERENCES](https://docs.snowflake.com/en/sql-reference/functions/policy_references), [lecture du tag dans une politique](https://docs.snowflake.com/en/sql-reference/functions/system_get_tag_on_current_column).

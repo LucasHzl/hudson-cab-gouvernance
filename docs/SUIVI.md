@@ -7,7 +7,7 @@
 | Preuve | Fichier(s) dans docs/ | Résultat |
 |---|---|---|
 | Abonnement CNIL | 01_abonnement_veille.png | Inscription enregistrée |
-| Tags initiaux | 02_tags_dim_driver_avant_correction.png | Historique de la couverture partielle ; nouvelle couverture à capturer après D01 |
+| Tags initiaux | 02_tags_dim_driver_avant_correction.png | Historique de la couverture partielle ; couverture complète observée ensuite sur 29 et 31a/31b |
 | Même requête par rôle | 03a_acces_rh_paie.png, 03b_acces_queens.png, 03c_acces_analyste.png, 03d_acces_accountadmin.png | Comparaison des lectures |
 | Lignage | 04_lignage.png | Sources dimension et STAGING services |
 | Qualité | 06_resultats_qualite_manuels.png, 16_qualite_par_tache.png, 23_qualite_retablie_seuil_50.png | Mesures et rétablissement |
@@ -26,6 +26,9 @@
 | Après rejeu des règles | 26_rejeu_politiques_18_controles.png | 18 contrôles OK |
 | Recette complète | 27_recette_complete_69_controles.png | 69/69 conformes, huit rôles, zéro échec avant D01 |
 | Rejeu du chargement | 28_rejeu_chargement.png | Six contrôles OK après deux rejeux, stage vide |
+| Couverture complète | 29_couverture_complete_tags.png | 39 colonnes conformes, zéro écart ; 21 personnelles dans le catalogue |
+| Après classification | 30_recette_apres_classification.png | 69/69 conformes sur huit rôles, zéro échec |
+| Tags détaillés actuels | 31a_tags_dim_driver_complets.png, 31b_tags_dim_driver_complets.png | Les 13 colonnes de DIM_DRIVER portent leur classification |
 
 Toutes les catégories de captures explicitement demandées sont présentes. Les images sont conservées sans modification de leur contenu. Les références avant et après purge sont datées, pas interchangeables.
 
@@ -33,8 +36,8 @@ Toutes les catégories de captures explicitement demandées sont présentes. Les
 
 Les recettes 10 et 11 sont prouvées par les captures 27/28 ; la suspension de la racine est consignée sans capture dédiée. Les règles initiales, le chargement et la matrice d’accès ont leurs preuves. La consultation nominative de l’audit reste privée, sans sortie personnelle publiée.
 
-Décision D01 : compléter la classification avec donnee_professionnelle et activite. L’extension est documentée, le contrat initial est conservé. Migration préparée dans 05_completer_tags.sql ; couverture visée 39 colonnes personnelles et zéro manque. Pour éviter de masquer DEPOT, les masques sont attachés directement avant retrait des anciens liens automatiques du tag.
+Décision D01 : compléter la classification avec donnee_professionnelle et activite. L’extension est documentée, le contrat initial est conservé. Migration exécutée par 05_completer_tags.sql ; couverture observée 39 colonnes personnelles et zéro manque, capture 29. Pour éviter de masquer DEPOT, les masques sont attachés directement avant retrait des anciens liens automatiques du tag.
 
-Restent à exécuter : migration 05, test 12 de couverture, puis test 10 de non-régression. Capturer les deux tableaux et les tags actualisés de DIM_DRIVER. Aucune tâche n’est activée par ces fichiers ; la racine reste suspendue. Publication des derniers commits à vérifier après push.
+Tests 12 et 10 exécutés après migration : cinq lignes de couverture OK et 69 conformités, captures 29/30. Les tags détaillés de DIM_DRIVER sont conservés dans 31a/31b. Les 17 critères hors bonus ont leurs pièces et preuves, sous réserve de l’évaluation de l’extension D01 et des limites explicites. Aucune tâche n’est activée par ces fichiers ; suspension finale consignée. Seule la publication des derniers commits reste à vérifier après push.
 
 Le minimum hors bonus de trois règles qualité est implémenté. Les bonus ne sont ni requis ni présentés comme réalisés.
